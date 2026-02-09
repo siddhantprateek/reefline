@@ -32,9 +32,8 @@ export function Sidebar({ isCollapsed = false, toggleSidebar }: SidebarProps) {
     >
       {/* Toggle Button */}
       <Button
-        variant="outline"
         size="icon"
-        className="absolute -right-3 top-6 z-20 h-6 w-6 rounded-full border bg-background shadow-md hover:bg-muted"
+        className="absolute -right-3 top-6 z-20 h-6 w-6 rounded-full border bg-background text-foreground cursor-pointer hover:bg-muted"
         onClick={toggleSidebar}
       >
         {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
