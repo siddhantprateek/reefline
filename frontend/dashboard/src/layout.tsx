@@ -20,7 +20,7 @@ export default function Layout() {
           "flex w-full flex-col transition-all duration-300",
           isSidebarCollapsed ? "md:ml-16" : "md:ml-60"
         )}>
-          <div className="flex-1 p-4 md:p-6">
+          <div className="flex-1">
             <Outlet />
           </div>
           <Footer />

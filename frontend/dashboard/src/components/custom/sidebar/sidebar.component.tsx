@@ -60,12 +60,6 @@ export function Sidebar({ isCollapsed = false, toggleSidebar }: SidebarProps) {
             </Link>
           </Button>
           <Button variant="ghost" className={cn("justify-start gap-3", isCollapsed && "justify-center px-2")} asChild>
-            <Link to="/editor">
-              <FileCode className="h-5 w-5 shrink-0" />
-              {!isCollapsed && <span>Editor</span>}
-            </Link>
-          </Button>
-          <Button variant="ghost" className={cn("justify-start gap-3", isCollapsed && "justify-center px-2")} asChild>
             <Link to="/integrations">
               <Container className="h-5 w-5 shrink-0" />
               {!isCollapsed && <span>Integrations</span>}
