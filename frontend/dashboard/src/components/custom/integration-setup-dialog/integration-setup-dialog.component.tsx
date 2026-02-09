@@ -12,14 +12,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import type { IntegrationField } from "@/types/integrations";
 
 export interface IntegrationSetupDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   integrationName: string;
   integrationIcon: React.ComponentType<{ size?: number; className?: string }>;
-  onSave: (apiKey: string) => Promise<void>;
-  onTest?: (apiKey: string) => Promise<boolean>;
+  fields: IntegrationField[];
+  onSave: (values: Record<string, string>) => Promise<void>;
+  onTest?: (values: Record<string, string>) => Promise<boolean>;
 }
 
 export function IntegrationSetupDialog({
@@ -27,17 +29,31 @@ export function IntegrationSetupDialog({
   onOpenChange,
   integrationName,
   integrationIcon: Icon,
+  fields,
   onSave,
   onTest,
 }: IntegrationSetupDialogProps) {
-  const [apiKey, setApiKey] = useState("");
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [testStatus, setTestStatus] = useState<"success" | "error" | null>(null);
   const [testMessage, setTestMessage] = useState("");
 
+  const handleFieldChange = (fieldName: string, value: string) => {
+    setFormValues((prev) => ({ ...prev, [fieldName]: value }));
+  };
+
+  const isFormValid = () => {
+    return fields.every((field) => {
+      if (field.required) {
+        return formValues[field.name]?.trim();
+      }
+      return true;
+    });
+  };
+
   const handleTestAndSave = async () => {
-    if (!apiKey.trim()) return;
+    if (!isFormValid()) return;
 
     // First test if onTest is provided
     if (onTest) {
@@ -46,12 +62,12 @@ export function IntegrationSetupDialog({
       setTestMessage("");
 
       try {
-        const result = await onTest(apiKey);
+        const result = await onTest(formValues);
         setTestStatus(result ? "success" : "error");
         setTestMessage(
           result
-            ? "Connection successful! API key is valid."
-            : "Connection failed. Please check your API key."
+            ? "Connection successful! Credentials are valid."
+            : "Connection failed. Please check your credentials."
         );
 
         // If test fails, don't proceed to save
@@ -72,8 +88,8 @@ export function IntegrationSetupDialog({
     // Then save
     setIsLoading(true);
     try {
-      await onSave(apiKey);
-      setApiKey("");
+      await onSave(formValues);
+      setFormValues({});
       setTestStatus(null);
       setTestMessage("");
       onOpenChange(false);
@@ -86,7 +102,7 @@ export function IntegrationSetupDialog({
   };
 
   const handleCancel = () => {
-    setApiKey("");
+    setFormValues({});
     setTestStatus(null);
     setTestMessage("");
     onOpenChange(false);
@@ -100,32 +116,37 @@ export function IntegrationSetupDialog({
             <div className="p-2 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
               <Icon size={24} className="text-primary" />
             </div>
-            <DialogTitle className="text-xl">Setup {integrationName}</DialogTitle>
+            <DialogTitle className="text-xl font-medium">Setup {integrationName}</DialogTitle>
           </div>
           <DialogDescription className="text-sm text-muted-foreground">
-            Enter your API key to connect {integrationName} to your account. Your
+            Enter your credentials to connect {integrationName} to your account. Your
             credentials will be securely stored and encrypted.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="api-key" className="text-sm font-medium">
-              API Key
-            </Label>
-            <Input
-              id="api-key"
-              type="password"
-              placeholder="sk-..."
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="font-mono text-sm"
-              disabled={isLoading || isTesting}
-            />
-            <p className="text-xs text-muted-foreground">
-              You can find your API key in your {integrationName} dashboard.
-            </p>
-          </div>
+          {fields.map((field) => (
+            <div key={field.name} className="space-y-2">
+              <Label htmlFor={field.name} className="text-sm font-medium">
+                {field.label}
+                {field.required && <span className="text-destructive ml-1">*</span>}
+              </Label>
+              <Input
+                id={field.name}
+                type={field.type}
+                placeholder={field.placeholder}
+                value={formValues[field.name] || ""}
+                onChange={(e) => handleFieldChange(field.name, e.target.value)}
+                className="font-mono text-sm"
+                disabled={isLoading || isTesting}
+              />
+              {field.helpText && (
+                <p className="text-xs text-muted-foreground">
+                  {field.helpText}
+                </p>
+              )}
+            </div>
+          ))}
 
           {testStatus && (
             <div
@@ -159,7 +180,7 @@ export function IntegrationSetupDialog({
           <Button
             type="button"
             onClick={handleTestAndSave}
-            disabled={!apiKey.trim() || isLoading || isTesting}
+            disabled={!isFormValid() || isLoading || isTesting}
           >
             {isLoading ? (
               <>
@@ -175,3 +196,4 @@ export function IntegrationSetupDialog({
     </Dialog>
   );
 }
+

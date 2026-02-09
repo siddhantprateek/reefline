@@ -3,118 +3,44 @@ import { IntegrationCard, IntegrationSetupDialog } from "@/components/custom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Filter } from "lucide-react";
-import {
-  SiDocker,
-  SiGithub,
-  SiOpenai,
-  SiAnthropic,
-  SiGoogle,
-} from "@icons-pack/react-simple-icons";
-
-// Custom icons for Harbor and OpenRouter (not in react-simple-icons)
-const HarborIcon = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M12 2L2 7v10c0 5.55 3.84 10.74 10 12 6.16-1.26 10-6.45 10-12V7l-10-5zm0 2.18l8 4v8.82c0 4.52-2.98 8.69-8 9.92-5.02-1.23-8-5.4-8-9.92V8.18l8-4z" />
-  </svg>
-);
-
-const OpenRouterIcon = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg"><title>OpenRouter</title><path d="M16.778 1.844v1.919q-.569-.026-1.138-.032-.708-.008-1.415.037c-1.93.126-4.023.728-6.149 2.237-2.911 2.066-2.731 1.95-4.14 2.75-.396.223-1.342.574-2.185.798-.841.225-1.753.333-1.751.333v4.229s.768.108 1.61.333c.842.224 1.789.575 2.185.799 1.41.798 1.228.683 4.14 2.75 2.126 1.509 4.22 2.11 6.148 2.236.88.058 1.716.041 2.555.005v1.918l7.222-4.168-7.222-4.17v2.176c-.86.038-1.611.065-2.278.021-1.364-.09-2.417-.357-3.979-1.465-2.244-1.593-2.866-2.027-3.68-2.508.889-.518 1.449-.906 3.822-2.59 1.56-1.109 2.614-1.377 3.978-1.466.667-.044 1.418-.017 2.278.02v2.176L24 6.014Z" /></svg>
-);
-
-interface Integration {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  category: string;
-  status?: "connected" | "disconnected";
-}
-
-const integrations: Integration[] = [
-  {
-    id: "docker",
-    name: "Docker",
-    description: "Connect to Docker registries to manage and deploy container images efficiently.",
-    icon: SiDocker,
-    category: "Container Registry",
-    status: "disconnected",
-  },
-  {
-    id: "harbor",
-    name: "Harbor",
-    description: "Enterprise-grade container registry with security, policy, and lifecycle management.",
-    icon: HarborIcon,
-    category: "Container Registry",
-    status: "disconnected",
-  },
-  {
-    id: "github",
-    name: "GitHub",
-    description: "Integrate with GitHub for repository management, CI/CD, and package registry.",
-    icon: SiGithub,
-    category: "Version Control",
-    status: "disconnected",
-  },
-  {
-    id: "openai",
-    name: "OpenAI",
-    description: "Access GPT models and other AI capabilities from OpenAI's API platform.",
-    icon: SiOpenai,
-    category: "AI Provider",
-    status: "disconnected",
-  },
-  {
-    id: "anthropic",
-    name: "Anthropic",
-    description: "Integrate Claude models for advanced AI-powered conversations and analysis.",
-    icon: SiAnthropic,
-    category: "AI Provider",
-    status: "disconnected",
-  },
-  {
-    id: "google",
-    name: "Google AI",
-    description: "Connect to Google's Gemini and other AI services for powerful language models.",
-    icon: SiGoogle,
-    category: "AI Provider",
-    status: "disconnected",
-  },
-  {
-    id: "openrouter",
-    name: "OpenRouter",
-    description: "Unified API for accessing multiple AI models from various providers.",
-    icon: OpenRouterIcon,
-    category: "AI Provider",
-    status: "disconnected",
-  },
-];
+import { integrationSchemas, type IntegrationSchema } from "@/types/integrations";
 
 export function IntegrationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
+  const [selectedIntegration, setSelectedIntegration] = useState<IntegrationSchema | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleSetup = (integration: Integration) => {
+  const handleSetup = (integration: IntegrationSchema) => {
     setSelectedIntegration(integration);
     setIsDialogOpen(true);
   };
 
-  const handleSave = async (apiKey: string) => {
-    console.log("Saving API key for", selectedIntegration?.name, ":", apiKey);
+  const handleSave = async (values: Record<string, string>) => {
+    console.log("Saving credentials for", selectedIntegration?.name, ":", values);
     // TODO: Implement actual API call to save the integration
     await new Promise((resolve) => setTimeout(resolve, 1000));
   };
 
-  const handleTest = async (apiKey: string): Promise<boolean> => {
-    console.log("Testing API key for", selectedIntegration?.name, ":", apiKey);
+  const handleTest = async (values: Record<string, string>): Promise<boolean> => {
+    console.log("Testing credentials for", selectedIntegration?.name, ":", values);
     // TODO: Implement actual API call to test the integration
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    // Simulate success/failure
-    return apiKey.length > 10;
+    // Simulate success/failure based on all required fields having values
+    const allFieldsFilled = Object.values(values).every((v) => v && v.length > 3);
+    return allFieldsFilled;
   };
 
-  const filteredIntegrations = integrations.filter(
+  const handleDisable = (integration: IntegrationSchema) => {
+    console.log("Disabling", integration.name);
+    // TODO: Implement disable logic
+  };
+
+  const handleRemove = (integration: IntegrationSchema) => {
+    console.log("Removing", integration.name);
+    // TODO: Implement remove logic
+  };
+
+  const filteredIntegrations = integrationSchemas.filter(
     (integration) =>
       integration.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       integration.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -161,6 +87,8 @@ export function IntegrationsPage() {
             category={integration.category}
             status={integration.status}
             onSetup={() => handleSetup(integration)}
+            onDisable={() => handleDisable(integration)}
+            onRemove={() => handleRemove(integration)}
           />
         ))}
       </div>
@@ -181,6 +109,7 @@ export function IntegrationsPage() {
           onOpenChange={setIsDialogOpen}
           integrationName={selectedIntegration.name}
           integrationIcon={selectedIntegration.icon}
+          fields={selectedIntegration.fields}
           onSave={handleSave}
           onTest={handleTest}
         />
@@ -188,4 +117,3 @@ export function IntegrationsPage() {
     </div>
   );
 }
-
