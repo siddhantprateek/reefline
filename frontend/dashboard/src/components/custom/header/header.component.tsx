@@ -12,7 +12,7 @@ export function Header() {
         <div className="flex w-full items-center justify-between">
           <div className="mr-4 hidden md:flex">
             <a className="mr-6 flex items-center space-x-2" href="/">
-              <span className="hidden font-bold sm:inline-block">Reefline</span>
+              <span className="hidden font-light sm:inline-block">Reefline.ai</span>
             </a>
           </div>
           <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">

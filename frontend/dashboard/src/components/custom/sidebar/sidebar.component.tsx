@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { BarChart, Home, Settings, Table, Moon, Sun, Monitor, ChevronLeft, ChevronRight, Palette } from "lucide-react"
+import { Home, Settings, Moon, Sun, Monitor, ChevronLeft, ChevronRight, Palette, Scan, Sparkles, FileCode, Container, History } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -48,15 +48,33 @@ export function Sidebar({ isCollapsed = false, toggleSidebar }: SidebarProps) {
             </Link>
           </Button>
           <Button variant="ghost" className={cn("justify-start gap-3", isCollapsed && "justify-center px-2")} asChild>
-            <Link to="/metrics">
-              <BarChart className="h-5 w-5 shrink-0" />
-              {!isCollapsed && <span>Metrics</span>}
+            <Link to="/analysis">
+              <Scan className="h-5 w-5 shrink-0" />
+              {!isCollapsed && <span>Analysis</span>}
             </Link>
           </Button>
           <Button variant="ghost" className={cn("justify-start gap-3", isCollapsed && "justify-center px-2")} asChild>
-            <Link to="/tables">
-              <Table className="h-5 w-5 shrink-0" />
-              {!isCollapsed && <span>Tables</span>}
+            <Link to="/optimization">
+              <Sparkles className="h-5 w-5 shrink-0" />
+              {!isCollapsed && <span>Optimization</span>}
+            </Link>
+          </Button>
+          <Button variant="ghost" className={cn("justify-start gap-3", isCollapsed && "justify-center px-2")} asChild>
+            <Link to="/editor">
+              <FileCode className="h-5 w-5 shrink-0" />
+              {!isCollapsed && <span>Editor</span>}
+            </Link>
+          </Button>
+          <Button variant="ghost" className={cn("justify-start gap-3", isCollapsed && "justify-center px-2")} asChild>
+            <Link to="/integrations">
+              <Container className="h-5 w-5 shrink-0" />
+              {!isCollapsed && <span>Integrations</span>}
+            </Link>
+          </Button>
+          <Button variant="ghost" className={cn("justify-start gap-3", isCollapsed && "justify-center px-2")} asChild>
+            <Link to="/history">
+              <History className="h-5 w-5 shrink-0" />
+              {!isCollapsed && <span>History</span>}
             </Link>
           </Button>
         </nav>
