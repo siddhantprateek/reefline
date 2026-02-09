@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # Reefline Server
+  reefline-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - ENVIRONMENT=development
+      - LOG_LEVEL=info
+      - OTEL_ENABLED=true
+      - OTEL_SERVICE_NAME=reefline-server
+      - OTEL_SERVICE_VERSION=1.0.0
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=reefline
+      - DB_PASSWORD=reefline
+      - DB_NAME=reefline
+      - DB_SSL_MODE=disable
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_USE_SSL=false
+      - MINIO_DEFAULT_BUCKET=reefline
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - reefline-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: reefline-postgres
+    environment:
+      - POSTGRES_USER=reefline
+      - POSTGRES_PASSWORD=reefline
+      - POSTGRES_DB=reefline
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reefline -d reefline"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - reefline-network
+
+  # MinIO Object Storage
+  minio:
+    image: minio/minio:latest
+    container_name: reefline-minio
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - reefline-network
+
+  # Archestra Platform
+  archestra:
+    image: archestra/platform
+    container_name: reefline-archestra
+    environment:
+      - ARCHESTRA_QUICKSTART=true
+    ports:
+      - "9002:9000"
+      - "3000:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - archestra-postgres-data:/var/lib/postgresql/data
+      - archestra-app-data:/app/data
+    networks:
+      - reefline-network
+
+networks:
+  reefline-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  minio-data:
+  archestra-postgres-data:
+  archestra-app-data:
