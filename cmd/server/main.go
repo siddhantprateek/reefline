@@ -11,6 +11,9 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/siddhantprateek/reefline/internal/routes"
+	"github.com/siddhantprateek/reefline/pkg/database"
+	"github.com/siddhantprateek/reefline/pkg/storage"
 	"github.com/siddhantprateek/reefline/pkg/telemetry"
 )
 
@@ -19,6 +22,26 @@ func main() {
 	telemetryConfig := telemetry.GetConfigFromEnv()
 	shutdown := telemetry.Initialize(telemetryConfig)
 	defer shutdown()
+
+	// Initialize database
+	dbConfig := database.GetConfigFromEnv()
+	db, err := database.Initialize(dbConfig)
+	if err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+	defer database.Close()
+
+	// Run migrations (add your models here)
+	if err := database.AutoMigrate(db); err != nil {
+		log.Fatalf("Failed to run database migrations: %v", err)
+	}
+
+	// Initialize MinIO storage
+	storageConfig := storage.GetConfigFromEnv()
+	_, err = storage.Initialize(storageConfig)
+	if err != nil {
+		log.Fatalf("Failed to initialize storage: %v", err)
+	}
 
 	app := fiber.New(fiber.Config{
 		AppName: "Reefline Server",
@@ -30,7 +53,7 @@ func main() {
 	app.Use(logger.New())
 	app.Use(recover.New())
 
-	setupRoutes(app)
+	routes.Setup(app)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -49,35 +72,4 @@ func main() {
 
 	log.Printf("Starting Reefline Server on port %s", port)
 	log.Fatal(app.Listen(":" + port))
-}
-
-func setupRoutes(app *fiber.App) {
-	api := app.Group("/api/v1")
-
-	setupHealthRoutes(api)
-}
-
-func setupHealthRoutes(api fiber.Router) {
-	health := api.Group("/health")
-
-	health.Get("/", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"status":  "ok",
-			"service": "reefline-server",
-		})
-	})
-
-	health.Get("/ready", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"status":  "ready",
-			"service": "reefline-server",
-		})
-	})
-
-	health.Get("/live", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"status":  "alive",
-			"service": "reefline-server",
-		})
-	})
 }
