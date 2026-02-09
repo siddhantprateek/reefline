@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { Home, Settings, Moon, Sun, Monitor, ChevronLeft, ChevronRight, Palette, Scan, Sparkles, FileCode, Container, History } from "lucide-react"
+import { Home, Settings, Moon, Sun, Monitor, ChevronLeft, ChevronRight, Palette, Scan, Sparkles, Container, History } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
