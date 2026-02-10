@@ -53,3 +53,6 @@ dist-ssr/
 *.local
 
 .docs/
+deploy/harbor/common/
+deploy/harbor/data/
+deploy/harbor/logs/
