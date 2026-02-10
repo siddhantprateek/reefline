@@ -29,8 +29,7 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-    networks:
-      - reefline-network
+    
 
   # PostgreSQL Database
   postgres:
@@ -49,8 +48,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - reefline-network
+    
 
   # MinIO Object Storage
   minio:
@@ -70,8 +68,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - reefline-network
+    
 
   # Archestra Platform
   archestra:
@@ -86,12 +83,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - archestra-postgres-data:/var/lib/postgresql/data
       - archestra-app-data:/app/data
-    networks:
-      - reefline-network
-
-networks:
-  reefline-network:
-    driver: bridge
+    
 
 volumes:
   postgres-data:

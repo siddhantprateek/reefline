@@ -1,14 +1,47 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { IntegrationCard, IntegrationSetupDialog } from "@/components/custom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Filter } from "lucide-react";
 import { integrationSchemas, type IntegrationSchema } from "@/types/integrations";
+import {
+  listIntegrations,
+  connectIntegration,
+  testCredentials,
+  disconnectIntegration,
+  type IntegrationStatus,
+} from "@/api/integration.api";
 
 export function IntegrationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIntegration, setSelectedIntegration] = useState<IntegrationSchema | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [statuses, setStatuses] = useState<Record<string, IntegrationStatus>>({});
+
+  // Fetch integration statuses from the backend on mount
+  const fetchStatuses = useCallback(async () => {
+    try {
+      const response = await listIntegrations();
+      const statusMap: Record<string, IntegrationStatus> = {};
+      response.integrations.forEach((s) => {
+        statusMap[s.id] = s;
+      });
+      setStatuses(statusMap);
+    } catch (err) {
+      // Backend may not be running yet — silently fall back to default statuses
+      console.warn("Failed to fetch integration statuses:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStatuses();
+  }, [fetchStatuses]);
+
+  // Merge backend statuses with the static schema definitions
+  const integrationsWithStatus: IntegrationSchema[] = integrationSchemas.map((schema) => ({
+    ...schema,
+    status: statuses[schema.id]?.status === "connected" ? "connected" : "disconnected",
+  }));
 
   const handleSetup = (integration: IntegrationSchema) => {
     setSelectedIntegration(integration);
@@ -16,35 +49,85 @@ export function IntegrationsPage() {
   };
 
   const handleSave = async (values: Record<string, string>) => {
-    console.log("Saving credentials for", selectedIntegration?.name, ":", values);
-    // TODO: Implement actual API call to save the integration
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (!selectedIntegration) return;
+
+    try {
+      const response = await connectIntegration(selectedIntegration.id, values);
+
+      if (response.status === "connected") {
+        // Update local status immediately
+        setStatuses((prev) => ({
+          ...prev,
+          [selectedIntegration.id]: {
+            id: selectedIntegration.id,
+            status: "connected",
+            connected_at: new Date().toISOString(),
+            metadata: response.metadata,
+          },
+        }));
+        console.log(`✅ ${selectedIntegration.name} connected successfully`);
+      } else {
+        throw new Error(response.error || "Connection failed");
+      }
+    } catch (err) {
+      console.error(`❌ Failed to connect ${selectedIntegration.name}:`, err);
+      throw err; // Re-throw so the dialog shows the error state
+    }
   };
 
   const handleTest = async (values: Record<string, string>): Promise<boolean> => {
-    console.log("Testing credentials for", selectedIntegration?.name, ":", values);
-    // TODO: Implement actual API call to test the integration
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    // Simulate success/failure based on all required fields having values
-    const allFieldsFilled = Object.values(values).every((v) => v && v.length > 3);
-    return allFieldsFilled;
+    if (!selectedIntegration) return false;
+
+    try {
+      const response = await testCredentials(selectedIntegration.id, values);
+      return response.status === "connected";
+    } catch (err) {
+      console.error("Credential test failed:", err);
+      return false;
+    }
   };
 
-  const handleDisable = (integration: IntegrationSchema) => {
-    console.log("Disabling", integration.name);
-    // TODO: Implement disable logic
+  const handleDisable = async (integration: IntegrationSchema) => {
+    try {
+      await disconnectIntegration(integration.id);
+
+      // Update local status immediately
+      setStatuses((prev) => ({
+        ...prev,
+        [integration.id]: {
+          id: integration.id,
+          status: "disconnected",
+        },
+      }));
+      console.log(`🔌 ${integration.name} disconnected`);
+    } catch (err) {
+      console.error(`❌ Failed to disconnect ${integration.name}:`, err);
+    }
   };
 
-  const handleRemove = (integration: IntegrationSchema) => {
-    console.log("Removing", integration.name);
-    // TODO: Implement remove logic
+  const handleRemove = async (integration: IntegrationSchema) => {
+    try {
+      await disconnectIntegration(integration.id);
+
+      // Update local status immediately
+      setStatuses((prev) => ({
+        ...prev,
+        [integration.id]: {
+          id: integration.id,
+          status: "disconnected",
+        },
+      }));
+      console.log(`🗑️ ${integration.name} removed`);
+    } catch (err) {
+      console.error(`❌ Failed to remove ${integration.name}:`, err);
+    }
   };
 
-  const filteredIntegrations = integrationSchemas.filter(
+  const filteredIntegrations = integrationsWithStatus.filter(
     (integration) =>
       integration.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       integration.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      integration.category.toLowerCase().includes(searchQuery.toLowerCase())
+      integration.category.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (

@@ -13,6 +13,7 @@ func Setup(app *fiber.App) {
 	setupAnalyzeRoutes(api)
 	setupJobRoutes(api)
 	setupCompareRoutes(api)
+	setupIntegrationRoutes(api)
 }
 
 // setupHealthRoutes configures health check endpoints
@@ -68,4 +69,57 @@ func setupCompareRoutes(api fiber.Router) {
 
 	// POST /api/v1/compare — Compare two completed analysis jobs
 	api.Post("/compare", compareHandler.Handle)
+}
+
+// setupIntegrationRoutes configures integration management and provider-specific endpoints
+func setupIntegrationRoutes(api fiber.Router) {
+	integrationHandler := handlers.NewIntegrationHandler()
+
+	integrations := api.Group("/integrations")
+
+	// GET  /api/v1/integrations     — List all integrations with status
+	integrations.Get("/", integrationHandler.List)
+
+	// GET  /api/v1/integrations/:id  — Get specific integration details
+	integrations.Get("/:id", integrationHandler.Get)
+
+	// POST /api/v1/integrations/:id/connect    — Save credentials and validate
+	// POST /api/v1/integrations/:id/disconnect  — Remove credentials
+	// POST /api/v1/integrations/:id/test        — Re-validate existing credentials
+	integrations.Post("/:id/connect", integrationHandler.Connect)
+	integrations.Post("/:id/disconnect", integrationHandler.Disconnect)
+	integrations.Post("/:id/test", integrationHandler.TestConnection)
+
+	// === GitHub-specific endpoints ===
+	gh := integrations.Group("/github")
+
+	// GET  /api/v1/integrations/github/repos          — List GitHub repositories
+	gh.Get("/repos", integrationHandler.ListGitHubRepos)
+
+	// GET  /api/v1/integrations/github/repos/:owner/:repo/dockerfile — Fetch Dockerfile from repo
+	gh.Get("/repos/:owner/:repo/dockerfile", integrationHandler.GetGitHubDockerfile)
+
+	// GET  /api/v1/integrations/github/images          — List GHCR container images
+	gh.Get("/images", integrationHandler.ListGitHubContainerImages)
+
+	// POST /api/v1/integrations/github/repos/:owner/:repo/issues — Create optimization issue
+	gh.Post("/repos/:owner/:repo/issues", integrationHandler.CreateGitHubIssue)
+
+	// === Docker Hub-specific endpoints ===
+	docker := integrations.Group("/docker")
+
+	// GET /api/v1/integrations/docker/repos                         — List Docker Hub repos
+	docker.Get("/repos", integrationHandler.ListDockerHubRepos)
+
+	// GET /api/v1/integrations/docker/repos/:namespace/:repo/tags   — List tags for a repo
+	docker.Get("/repos/:namespace/:repo/tags", integrationHandler.ListDockerHubTags)
+
+	// === Harbor-specific endpoints ===
+	harbor := integrations.Group("/harbor")
+
+	// GET /api/v1/integrations/harbor/projects                                       — List Harbor projects
+	harbor.Get("/projects", integrationHandler.ListHarborProjects)
+
+	// GET /api/v1/integrations/harbor/projects/:project/repos/:repo/artifacts         — List artifacts
+	harbor.Get("/projects/:project/repos/:repo/artifacts", integrationHandler.ListHarborArtifacts)
 }

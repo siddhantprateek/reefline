@@ -13,6 +13,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/siddhantprateek/reefline/internal/routes"
 	"github.com/siddhantprateek/reefline/pkg/database"
+	"github.com/siddhantprateek/reefline/pkg/models"
 	"github.com/siddhantprateek/reefline/pkg/storage"
 	"github.com/siddhantprateek/reefline/pkg/telemetry"
 )
@@ -32,7 +33,7 @@ func main() {
 	defer database.Close()
 
 	// Run migrations (add your models here)
-	if err := database.AutoMigrate(db); err != nil {
+	if err := database.AutoMigrate(db, &models.Integration{}); err != nil {
 		log.Fatalf("Failed to run database migrations: %v", err)
 	}
 
