@@ -4,5 +4,5 @@ export * from './analysis';
 export * from './optimization';
 export * from './editor';
 export * from './integrations';
-export * from './history';
+export * from './jobs';
 export * from './settings';

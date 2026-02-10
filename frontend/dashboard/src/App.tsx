@@ -7,7 +7,7 @@ import {
   OptimizationPage,
   EditorPage,
   IntegrationsPage,
-  HistoryPage,
+  JobsPage,
   SettingsPage
 } from "@/pages"
 
@@ -20,7 +20,7 @@ function App() {
         <Route path="optimization" element={<OptimizationPage />} />
         <Route path="editor" element={<EditorPage />} />
         <Route path="integrations" element={<IntegrationsPage />} />
-        <Route path="history" element={<HistoryPage />} />
+        <Route path="jobs" element={<JobsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
