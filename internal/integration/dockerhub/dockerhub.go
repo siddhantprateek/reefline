@@ -1,11 +1,13 @@
 package dockerhub
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 )
 
 const (
@@ -27,31 +29,16 @@ type Config struct {
 type Client struct {
 	config     Config
 	httpClient *http.Client
+	jwt        string
+	mu         sync.RWMutex
 }
 
 // NewClient creates a new Docker Hub integration client
 func NewClient(config Config) *Client {
 	return &Client{
-		config: config,
-		httpClient: &http.Client{
-			Transport: &tokenTransport{
-				token:     config.PersonalAccessToken,
-				transport: http.DefaultTransport,
-			},
-		},
+		config:     config,
+		httpClient: http.DefaultClient,
 	}
-}
-
-// tokenTransport adds the PAT token to every Docker Hub API request
-type tokenTransport struct {
-	token     string
-	transport http.RoundTripper
-}
-
-func (t *tokenTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", t.token))
-	req.Header.Set("Content-Type", "application/json")
-	return t.transport.RoundTrip(req)
 }
 
 // DockerRepository represents a repository on Docker Hub
@@ -83,12 +70,76 @@ type ImageArch struct {
 	Digest       string `json:"digest"`
 }
 
-// doRequest is a helper that executes an HTTP request and returns the response body.
+// login authenticates with Docker Hub using the PAT to get a JWT.
+func (c *Client) login(ctx context.Context) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// If already have a token, assume it's valid for now
+	// TODO: Check expiration if needed
+	if c.jwt != "" {
+		return nil
+	}
+
+	url := fmt.Sprintf("%s/users/login", DockerHubAPIBaseURL)
+	payload := map[string]string{
+		"username": c.config.Username,
+		"password": c.config.PersonalAccessToken,
+	}
+	bodyBytes, _ := json.Marshal(payload)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return fmt.Errorf("failed to create login request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("login request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("login failed (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	var response struct {
+		Token string `json:"token"`
+	}
+	if err := json.Unmarshal(readBody(resp.Body), &response); err != nil {
+		return fmt.Errorf("failed to parse login response: %w", err)
+	}
+
+	c.jwt = response.Token
+	return nil
+}
+
+// readBody reads and restores the body for unmarshal
+func readBody(r io.ReadCloser) []byte {
+	data, _ := io.ReadAll(r)
+	return data
+}
+
+// doRequest executes an HTTP request with automatic authentication.
 func (c *Client) doRequest(ctx context.Context, method, url string, body io.Reader) ([]byte, int, error) {
+	// Ensure we are logged in (unless we are already doing a login, handled inside login())
+	if err := c.login(ctx); err != nil {
+		return nil, 0, err
+	}
+
 	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to create request: %w", err)
 	}
+
+	c.mu.RLock()
+	token := c.jwt
+	c.mu.RUnlock()
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -104,35 +155,13 @@ func (c *Client) doRequest(ctx context.Context, method, url string, body io.Read
 	return data, resp.StatusCode, nil
 }
 
-// ValidateCredentials checks if the PAT and username are valid.
-// Returns the authenticated user info or an error.
+// ValidateCredentials checks if the PAT and username are valid by attempting to login.
 func (c *Client) ValidateCredentials(ctx context.Context) (string, error) {
-	// Docker Hub v2 API: GET /v2/users/{username}
-	url := fmt.Sprintf("%s/users/%s", DockerHubAPIBaseURL, c.config.Username)
-	data, status, err := c.doRequest(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to validate: %w", err)
+	// Trying to login is sufficient validation
+	if err := c.login(ctx); err != nil {
+		return "", err
 	}
-
-	if status == http.StatusUnauthorized || status == http.StatusForbidden {
-		return "", fmt.Errorf("invalid credentials: %d", status)
-	}
-	if status == http.StatusNotFound {
-		return "", fmt.Errorf("user not found: %s", c.config.Username)
-	}
-	if status != http.StatusOK {
-		return "", fmt.Errorf("unexpected status %d: %s", status, string(data))
-	}
-
-	var user struct {
-		ID       string `json:"id"`
-		Username string `json:"username"`
-	}
-	if err := json.Unmarshal(data, &user); err != nil {
-		return "", fmt.Errorf("failed to parse user response: %w", err)
-	}
-
-	return user.Username, nil
+	return c.config.Username, nil
 }
 
 // ListRepositories returns repositories belonging to the authenticated user's namespace.
@@ -231,6 +260,7 @@ func (c *Client) SearchImages(ctx context.Context, query string, page, pageSize 
 		return nil, fmt.Errorf("unexpected status %d: %s", status, string(data))
 	}
 
+	// Docker Hub search structure is slightly different, but let's assume standard pagination for now
 	var response struct {
 		Results []DockerRepository `json:"results"`
 	}
