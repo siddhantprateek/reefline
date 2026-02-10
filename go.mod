@@ -5,6 +5,7 @@ go 1.25.2
 require (
 	github.com/gofiber/contrib/otelfiber v1.0.10
 	github.com/gofiber/fiber/v2 v2.48.0
+	github.com/joho/godotenv v1.5.1
 	github.com/minio/minio-go/v7 v7.0.98
 	go.opentelemetry.io/otel v1.40.0
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.40.0

@@ -11,7 +11,9 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/joho/godotenv"
 	"github.com/siddhantprateek/reefline/internal/routes"
+	"github.com/siddhantprateek/reefline/pkg/crypto"
 	"github.com/siddhantprateek/reefline/pkg/database"
 	"github.com/siddhantprateek/reefline/pkg/models"
 	"github.com/siddhantprateek/reefline/pkg/storage"
@@ -19,6 +21,11 @@ import (
 )
 
 func main() {
+	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: No .env file found")
+	}
+
 	// Initialize telemetry
 	telemetryConfig := telemetry.GetConfigFromEnv()
 	shutdown := telemetry.Initialize(telemetryConfig)
@@ -43,6 +50,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize storage: %v", err)
 	}
+
+	// Initialize encryption (AES-256-GCM)
+	if err := crypto.Init(); err != nil {
+		log.Fatalf("Failed to initialize encryption: %v", err)
+	}
+	log.Println("Encryption subsystem initialized (AES-256-GCM)")
 
 	app := fiber.New(fiber.Config{
 		AppName: "Reefline Server",

@@ -13,6 +13,7 @@ import (
 	"github.com/siddhantprateek/reefline/internal/integration/dockerhub"
 	"github.com/siddhantprateek/reefline/internal/integration/github"
 	"github.com/siddhantprateek/reefline/internal/integration/harbor"
+	"github.com/siddhantprateek/reefline/pkg/crypto"
 	"github.com/siddhantprateek/reefline/pkg/database"
 	"github.com/siddhantprateek/reefline/pkg/models"
 )
@@ -169,9 +170,15 @@ func (h *IntegrationHandler) Connect(c *fiber.Ctx) error {
 		})
 	}
 
-	// Serialize credentials for storage
-	// TODO: Encrypt credentials before storing (use AES-256-GCM with a env-var key)
+	// Encrypt credentials before storing (AES-256-GCM)
 	credJSON, _ := json.Marshal(credentials)
+	encryptedCreds, err := crypto.Encrypt(credJSON)
+	if err != nil {
+		log.Printf("Failed to encrypt credentials: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to secure credentials",
+		})
+	}
 
 	// Serialize metadata for storage
 	metaJSON, _ := json.Marshal(metadata)
@@ -188,7 +195,7 @@ func (h *IntegrationHandler) Connect(c *fiber.Ctx) error {
 			UserID:        userID,
 			IntegrationID: integrationID,
 			Status:        "connected",
-			Credentials:   string(credJSON),
+			Credentials:   encryptedCreds,
 			Metadata:      string(metaJSON),
 			ConnectedAt:   &now,
 		}
@@ -201,7 +208,7 @@ func (h *IntegrationHandler) Connect(c *fiber.Ctx) error {
 	} else {
 		// Update existing
 		existing.Status = "connected"
-		existing.Credentials = string(credJSON)
+		existing.Credentials = encryptedCreds
 		existing.Metadata = string(metaJSON)
 		existing.ConnectedAt = &now
 		if err := database.DB.Save(&existing).Error; err != nil {
@@ -259,10 +266,19 @@ func (h *IntegrationHandler) TestConnection(c *fiber.Ctx) error {
 		})
 	}
 
-	// Decrypt and parse credentials
-	// TODO: Decrypt credentials (for now they're stored as plain JSON)
+	// Decrypt and parse stored credentials (AES-256-GCM)
+	decryptedJSON, err := crypto.Decrypt(integration.Credentials)
+	if err != nil {
+		log.Printf("Failed to decrypt credentials for %s: %v", integrationID, err)
+		return c.JSON(fiber.Map{
+			"id":     integrationID,
+			"status": "error",
+			"error":  "Failed to decrypt stored credentials",
+		})
+	}
+
 	var credentials map[string]string
-	if err := json.Unmarshal([]byte(integration.Credentials), &credentials); err != nil {
+	if err := json.Unmarshal(decryptedJSON, &credentials); err != nil {
 		return c.JSON(fiber.Map{
 			"id":     integrationID,
 			"status": "error",
@@ -275,7 +291,7 @@ func (h *IntegrationHandler) TestConnection(c *fiber.Ctx) error {
 	defer cancel()
 
 	start := time.Now()
-	_, err := validateProviderCredentials(ctx, integrationID, credentials)
+	_, err = validateProviderCredentials(ctx, integrationID, credentials)
 	latencyMs := time.Since(start).Milliseconds()
 
 	if err != nil {
@@ -530,9 +546,14 @@ func getStoredCredentials(c *fiber.Ctx, integrationID string) (map[string]string
 		return nil, fmt.Errorf("%s is not connected — set it up first", integrationID)
 	}
 
-	// TODO: Decrypt credentials
+	// Decrypt stored credentials (AES-256-GCM)
+	decryptedJSON, err := crypto.Decrypt(integration.Credentials)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt stored credentials")
+	}
+
 	var credentials map[string]string
-	if err := json.Unmarshal([]byte(integration.Credentials), &credentials); err != nil {
+	if err := json.Unmarshal(decryptedJSON, &credentials); err != nil {
 		return nil, fmt.Errorf("failed to read stored credentials")
 	}
 
