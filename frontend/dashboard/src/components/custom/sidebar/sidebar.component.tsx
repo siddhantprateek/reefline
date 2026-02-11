@@ -49,6 +49,12 @@ export function Sidebar({ isCollapsed = false, toggleSidebar }: SidebarProps) {
             </Link>
           </Button>
           <Button variant="ghost" className={cn("justify-start gap-3", isCollapsed && "justify-center px-2")} asChild>
+            <Link to="/jobs">
+              <History className="h-5 w-5 shrink-0" />
+              {!isCollapsed && <span>Jobs</span>}
+            </Link>
+          </Button>
+          <Button variant="ghost" className={cn("justify-start gap-3", isCollapsed && "justify-center px-2")} asChild>
             <Link to="/analysis">
               <Scan className="h-5 w-5 shrink-0" />
               {!isCollapsed && <span>Analysis</span>}
@@ -64,12 +70,6 @@ export function Sidebar({ isCollapsed = false, toggleSidebar }: SidebarProps) {
             <Link to="/integrations">
               <Container className="h-5 w-5 shrink-0" />
               {!isCollapsed && <span>Integrations</span>}
-            </Link>
-          </Button>
-          <Button variant="ghost" className={cn("justify-start gap-3", isCollapsed && "justify-center px-2")} asChild>
-            <Link to="/jobs">
-              <History className="h-5 w-5 shrink-0" />
-              {!isCollapsed && <span>Jobs</span>}
             </Link>
           </Button>
         </nav>

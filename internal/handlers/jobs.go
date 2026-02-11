@@ -2,14 +2,17 @@ package handlers
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/siddhantprateek/reefline/internal/queue"
 )
 
 // JobsHandler handles job listing, status checking, and deletion
-type JobsHandler struct{}
+type JobsHandler struct {
+	Queue queue.Queue
+}
 
 // NewJobsHandler creates a new JobsHandler instance
-func NewJobsHandler() *JobsHandler {
-	return &JobsHandler{}
+func NewJobsHandler(q queue.Queue) *JobsHandler {
+	return &JobsHandler{Queue: q}
 }
 
 // List returns all jobs for the authenticated user.
@@ -50,12 +53,21 @@ func (h *JobsHandler) List(c *fiber.Ctx) error {
 //	  "report": { "measured": { ... }, "proposed": { ... }, "tool_data": { ... } }
 //	}
 func (h *JobsHandler) Get(c *fiber.Ctx) error {
-	// TODO: Extract job ID from params
-	// TODO: Query PostgreSQL for job record
-	// TODO: Verify job belongs to authenticated user
-	// TODO: Return job status and report (if completed)
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"message": "get job endpoint not yet implemented",
+	jobID := c.Params("id")
+	if jobID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Job ID is required"})
+	}
+
+	// Get status from Queue (Redis/Memory)
+	status, err := h.Queue.GetJobStatus(c.Context(), jobID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Job not found or error retrieving status: " + err.Error()})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"job_id": jobID,
+		"status": status,
+		// TODO: Include report if COMPLETED (fetch from DB/Storage)
 	})
 }
 

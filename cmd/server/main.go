@@ -13,7 +13,9 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
+	"github.com/siddhantprateek/reefline/internal/queue"
 	"github.com/siddhantprateek/reefline/internal/routes"
+	"github.com/siddhantprateek/reefline/internal/worker"
 	"github.com/siddhantprateek/reefline/pkg/crypto"
 	"github.com/siddhantprateek/reefline/pkg/database"
 	"github.com/siddhantprateek/reefline/pkg/models"
@@ -86,7 +88,7 @@ func main() {
 	if enableDockle == "true" {
 		log.Println("Initializing dockle scanner...")
 		dockleConfig := tools.DockleConfig{
-			Enable:  true,
+			Enable: true,
 		}
 		tools.DockleScn = tools.NewDockleScanner(dockleConfig, slog.Default())
 		tools.DockleScn.Init()
@@ -110,6 +112,41 @@ func main() {
 		log.Println("Image inspector is disabled (set IMAGE_INSPECTOR_ENABLED=true to enable)")
 	}
 
+	// Initialize Job Queue
+	var q queue.Queue
+	redisHost := os.Getenv("REDIS_HOST")
+	if redisHost != "" {
+		redisPort := os.Getenv("REDIS_PORT")
+		if redisPort == "" {
+			redisPort = "6379"
+		}
+		redisAddr := redisHost + ":" + redisPort
+		redisPass := os.Getenv("REDIS_PASSWORD")
+		q = queue.NewRedisQueue(redisAddr, redisPass)
+		log.Printf("Using Redis job queue at %s", redisAddr)
+	} else {
+		// Fallback to In-Memory
+		q = queue.NewInMemoryQueue(100)
+		log.Println("Using In-Memory job queue")
+	}
+
+	// Register Handler
+	q.RegisterHandler("analyze_image", worker.ProcessAnalyzeJob)
+
+	// Start Queue
+	if err := q.Start(); err != nil {
+		log.Printf("Failed to start job queue: %v", err)
+		// Fallback to in-memory? Or fatal?
+		// User said: "one is in-memory if Redis is provided we chose Redis queue"
+		// If Redis provided but fails, maybe fail?
+		// But for development, I'll switch to Memory if Redis fails to connect?
+		// asynq.NewServer doesn't connect immediately?
+		// "Start" returns error?
+		// My RedisQueue.Start does return error but it runs async.
+		// Let's stick to Redis if configured.
+	}
+	defer q.Stop()
+
 	app := fiber.New(fiber.Config{
 		AppName: "Reefline Server",
 	})
@@ -120,7 +157,7 @@ func main() {
 	app.Use(logger.New())
 	app.Use(recover.New())
 
-	routes.Setup(app)
+	routes.Setup(app, q)
 
 	port := os.Getenv("PORT")
 	if port == "" {

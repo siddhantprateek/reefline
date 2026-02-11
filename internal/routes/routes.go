@@ -3,15 +3,16 @@ package routes
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/siddhantprateek/reefline/internal/handlers"
+	"github.com/siddhantprateek/reefline/internal/queue"
 )
 
 // Setup configures all application routes
-func Setup(app *fiber.App) {
+func Setup(app *fiber.App, q queue.Queue) {
 	api := app.Group("/api/v1")
 
 	setupHealthRoutes(api)
-	setupAnalyzeRoutes(api)
-	setupJobRoutes(api)
+	setupAnalyzeRoutes(api, q)
+	setupJobRoutes(api, q)
 	setupCompareRoutes(api)
 	setupIntegrationRoutes(api)
 }
@@ -27,20 +28,22 @@ func setupHealthRoutes(api fiber.Router) {
 }
 
 // setupAnalyzeRoutes configures the analysis submission endpoint
-func setupAnalyzeRoutes(api fiber.Router) {
-	analyzeHandler := handlers.NewAnalyzeHandler()
+func setupAnalyzeRoutes(api fiber.Router, q queue.Queue) {
+	analyzeHandler := handlers.NewAnalyzeHandler(q)
 
 	// POST /api/v1/analyze — Submit Dockerfile and/or image ref for analysis
 	api.Post("/analyze", analyzeHandler.Handle)
 }
 
 // setupJobRoutes configures job management and artifact download endpoints
-func setupJobRoutes(api fiber.Router) {
-	jobsHandler := handlers.NewJobsHandler()
+func setupJobRoutes(api fiber.Router, q queue.Queue) {
+	jobsHandler := handlers.NewJobsHandler(q)
 	reportHandler := handlers.NewReportHandler()
 	sseHandler := handlers.NewSSEHandler()
 
 	jobs := api.Group("/jobs")
+
+	// GET  /api/v1/jobs         — List user's jobs
 
 	// GET  /api/v1/jobs         — List user's jobs
 	jobs.Get("/", jobsHandler.List)
