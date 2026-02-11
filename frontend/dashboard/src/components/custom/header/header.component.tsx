@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Bell, User } from "lucide-react"
+import { Bell } from "lucide-react"
 import { DottedBackground } from "@/components/custom/header/dotted-background"
 
 export function Header() {
@@ -29,10 +29,6 @@ export function Header() {
               <Button variant="ghost" size="icon" className="h-8 w-8 px-0">
                 <Bell className="h-4 w-4" />
                 <span className="sr-only">Notifications</span>
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 px-0">
-                <User className="h-4 w-4" />
-                <span className="sr-only">Profile</span>
               </Button>
             </nav>
           </div>

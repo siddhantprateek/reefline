@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Outlet } from "react-router-dom"
 import { Header } from "@/components/custom/header"
 import { Sidebar } from "@/components/custom/sidebar"
-import { Footer } from "@/components/custom/footer"
+// import { Footer } from "@/components/custom/footer"
 import { cn } from "@/lib/utils"
 
 export default function Layout() {
@@ -23,7 +23,7 @@ export default function Layout() {
           <div className="flex-1">
             <Outlet />
           </div>
-          <Footer />
+          {/* <Footer /> */}
         </main>
       </div>
     </div>
