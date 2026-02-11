@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 // Config holds the configuration for a Harbor integration.
@@ -26,6 +27,9 @@ type Client struct {
 // NewClient creates a new Harbor integration client
 func NewClient(config Config) *Client {
 	baseURL := config.URL
+	if !strings.HasPrefix(baseURL, "http://") && !strings.HasPrefix(baseURL, "https://") {
+		baseURL = "https://" + baseURL
+	}
 	if len(baseURL) > 0 && baseURL[len(baseURL)-1] == '/' {
 		baseURL = baseURL[:len(baseURL)-1]
 	}
@@ -134,8 +138,9 @@ func (c *Client) doRequest(ctx context.Context, method, url string, body io.Read
 // ValidateCredentials checks if the Harbor URL, username, and password are valid.
 // Returns the Harbor version on success.
 func (c *Client) ValidateCredentials(ctx context.Context) (string, error) {
-	url := fmt.Sprintf("%s/api/v2.0/systeminfo", c.baseURL)
-	data, status, err := c.doRequest(ctx, http.MethodGet, url, nil)
+	// Check credentials against a protected endpoint (401 if invalid)
+	permURL := fmt.Sprintf("%s/api/v2.0/users/current/permissions", c.baseURL)
+	_, status, err := c.doRequest(ctx, http.MethodGet, permURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot reach Harbor at %s: %w", c.baseURL, err)
 	}
@@ -144,7 +149,18 @@ func (c *Client) ValidateCredentials(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("invalid credentials: 401 Unauthorized")
 	}
 	if status != http.StatusOK {
-		return "", fmt.Errorf("unexpected status %d: %s", status, string(data))
+		return "", fmt.Errorf("unexpected status checking permissions: %d", status)
+	}
+
+	// Get version info via systeminfo (which might be public, but we already validated auth)
+	url := fmt.Sprintf("%s/api/v2.0/systeminfo", c.baseURL)
+	data, status, err := c.doRequest(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to reach system info: %w", err)
+	}
+	// We expect 200 here too
+	if status != http.StatusOK {
+		return "", fmt.Errorf("unexpected status fetch system info: %d", status)
 	}
 
 	var info struct {
