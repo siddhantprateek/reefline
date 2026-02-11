@@ -7,14 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gofiber/contrib/otelfiber"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
 	"github.com/siddhantprateek/reefline/internal/queue"
-	"github.com/siddhantprateek/reefline/internal/routes"
+	"github.com/siddhantprateek/reefline/internal/worker"
 	"github.com/siddhantprateek/reefline/pkg/crypto"
 	"github.com/siddhantprateek/reefline/pkg/database"
 	"github.com/siddhantprateek/reefline/pkg/models"
@@ -60,6 +55,42 @@ func main() {
 	}
 	log.Println("Encryption subsystem initialized (AES-256-GCM)")
 
+	// Initialize vulnerability scanner
+	enableScanner := os.Getenv("VULNERABILITY_SCANNER_ENABLED")
+	if enableScanner == "true" {
+		log.Println("Initializing vulnerability scanner...")
+		scannerConfig := tools.ImageScans{
+			Enable: true,
+			Exclusions: tools.Exclusions{
+				Namespaces: []string{},
+				Labels:     map[string][]string{},
+			},
+		}
+		tools.ImgScanner = tools.NewImageScanner(scannerConfig, slog.Default())
+
+		// Initialize scanner in background
+		go func() {
+			tools.ImgScanner.Init("reefline", "1.0.0")
+			log.Println("Vulnerability scanner initialized successfully")
+		}()
+	} else {
+		log.Println("Vulnerability scanner is disabled (set VULNERABILITY_SCANNER_ENABLED=true to enable)")
+	}
+
+	// Initialize dockle (CIS Docker Benchmark) scanner
+	enableDockle := os.Getenv("DOCKLE_SCANNER_ENABLED")
+	if enableDockle == "true" {
+		log.Println("Initializing dockle scanner...")
+		dockleConfig := tools.DockleConfig{
+			Enable: true,
+		}
+		tools.DockleScn = tools.NewDockleScanner(dockleConfig, slog.Default())
+		tools.DockleScn.Init()
+		log.Println("Dockle scanner initialized (CIS Docker Benchmark)")
+	} else {
+		log.Println("Dockle scanner is disabled (set DOCKLE_SCANNER_ENABLED=true to enable)")
+	}
+
 	// Initialize image inspector (skopeo-like inspect via containers/image)
 	enableInspector := os.Getenv("IMAGE_INSPECTOR_ENABLED")
 	if enableInspector == "true" {
@@ -93,63 +124,40 @@ func main() {
 		log.Println("Using In-Memory job queue")
 	}
 
-	// Start Queue (for enqueueing only, no workers needed here technically if using Redis,
-	// but Asynq client doesn't need Start. However, our interface might expect it?
-	// RedisQueue.Start() starts the server. We don't need the server here.
-	// But let's check queue implementation.
-	// RedisQueue.Start() calls q.server.Run().
-	// We ONLY need the client to enqueue.
-	// But existing code called q.Start().
-	// IF we call q.Start(), this binary will ALSO process jobs if we registered handlers.
-	// We are NOT registering handlers here.
-	// So q.Start() will run a server with NO handlers. That's fine, just strict separation.
-	// Actually, better to NOT start the server if we don't want to process jobs.
-	// But our interface might strictly require Start().
-	// Let's look at RedisQueue.Start(): "return q.server.Run(q.mux)"
-	// If we don't call Start(), we can still usage q.Enqueue().
-	// So we can SKIP Start() in the server?
-	// The interface `queue.Queue` likely has Start/Stop.
-	// If I skip it, I might break the interface contract if I assign to `queue.Queue`.
-	// Let's call it for now to avoid breaking changes, but since no handlers are registered, it does nothing.
+	// Register Handler
+	q.RegisterHandler("analyze_image", worker.ProcessAnalyzeJob)
+
+	// Start Queue
+	log.Println("Starting worker...")
 	if err := q.Start(); err != nil {
-		log.Printf("Failed to start job queue: %v", err)
-	}
-	defer q.Stop()
-
-	app := fiber.New(fiber.Config{
-		AppName: "Reefline Server",
-	})
-
-	// Add telemetry middleware first
-	app.Use(otelfiber.Middleware())
-	app.Use(cors.New())
-	app.Use(logger.New())
-	app.Use(recover.New())
-
-	routes.Setup(app, q)
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+		log.Fatalf("Failed to start job queue: %v", err)
 	}
 
-	// Create channel for graceful shutdown
+	// Wait for interrupt signal using channel
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	<-c
 
-	go func() {
-		<-c
-		log.Println("Gracefully shutting down server...")
+	log.Println("Gracefully shutting down worker...")
 
-		// Stop image inspector if initialized
-		if tools.ImgInspector != nil {
-			log.Println("Stopping image inspector...")
-			tools.ImgInspector.Stop()
-		}
+	// Stop vulnerability scanner if initialized
+	if tools.ImgScanner != nil {
+		log.Println("Stopping vulnerability scanner...")
+		tools.ImgScanner.Stop()
+	}
 
-		app.Shutdown()
-	}()
+	// Stop dockle scanner if initialized
+	if tools.DockleScn != nil {
+		log.Println("Stopping dockle scanner...")
+		tools.DockleScn.Stop()
+	}
 
-	log.Printf("Starting Reefline Server on port %s", port)
-	log.Fatal(app.Listen(":" + port))
+	// Stop image inspector if initialized
+	if tools.ImgInspector != nil {
+		log.Println("Stopping image inspector...")
+		tools.ImgInspector.Stop()
+	}
+
+	q.Stop()
+	log.Println("Worker stopped")
 }

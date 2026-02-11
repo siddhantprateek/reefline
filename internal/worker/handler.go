@@ -8,9 +8,11 @@ import (
 )
 
 type AnalyzeJobPayload struct {
-	Dockerfile string `json:"dockerfile"`
-	ImageRef   string `json:"image_ref"`
-	AppContext string `json:"app_context"`
+	JobID      string      `json:"job_id"`
+	Dockerfile string      `json:"dockerfile"`
+	ImageRef   string      `json:"image_ref"`
+	AppContext string      `json:"app_context"`
+	SkopeoMeta interface{} `json:"skopeo_meta,omitempty"` // Keep as interface{} to avoid circular dep if tools not wanted here, or use tools.InspectResult
 }
 
 func ProcessAnalyzeJob(ctx context.Context, payload []byte) error {
