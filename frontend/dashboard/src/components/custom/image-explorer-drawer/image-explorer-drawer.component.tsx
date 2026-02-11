@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react"
-import { Copy, Tag, Calendar, Database, HardDrive, Hash } from "lucide-react"
+import { Copy, Tag, Calendar, Database, HardDrive, Hash, Play } from "lucide-react"
 import {
   Sheet,
   SheetContent,
   SheetTitle,
 } from "@/components/ui/sheet"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DottedBackground } from "@/components/custom/header/dotted-background";
@@ -12,6 +17,7 @@ import {
   listDockerHubTags,
   type DockerHubTag,
 } from "@/api/integration.api"
+import { analyzeImage } from "@/api/jobs.api"
 
 interface UnifiedImageItem {
   id: string
@@ -40,6 +46,7 @@ export function ImageExplorerDrawer({
   const [dockerTags, setDockerTags] = useState<DockerHubTag[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [scanningTags, setScanningTags] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (open && item?.registry === 'docker') {
@@ -67,6 +74,24 @@ export function ImageExplorerDrawer({
       console.error(err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleScan = async (imageRef: string) => {
+    setScanningTags(prev => new Set(prev).add(imageRef))
+    try {
+      const res = await analyzeImage(imageRef)
+      console.log("Analysis Job Started:", res)
+      alert(`Analysis started for ${imageRef}\nJob ID: ${res.job_id}`)
+    } catch (err: any) {
+      console.error("Analysis Failed:", err)
+      alert(`Failed to start analysis: ${err.message || String(err)}`)
+    } finally {
+      setScanningTags(prev => {
+        const next = new Set(prev)
+        next.delete(imageRef)
+        return next
+      })
     }
   }
 
@@ -180,21 +205,46 @@ export function ImageExplorerDrawer({
                             </span>
                             <span className="flex items-center gap-1 relative pl-4 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-3 before:w-px before:bg-border">
                               <Hash className="h-3 w-3" />
-                              <span className="font-mono truncate min-w-xl" title={tag.digest}>
+                              <span className="font-mono truncate max-w-xl" title={tag.digest}>
                                 {tag.digest}
                               </span>
                             </span>
                           </div>
 
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => navigator.clipboard.writeText(`docker pull ${item.name}:${tag.name}`)}
-                            title="Copy pull command"
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => navigator.clipboard.writeText(`docker pull ${item.name}:${tag.name}`)}
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Copy pull command</p>
+                              </TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => handleScan(`${item.name}:${tag.name}`)}
+                                  disabled={scanningTags.has(`${item.name}:${tag.name}`)}
+                                >
+                                  <Play className={`h-3.5 w-3.5 ${scanningTags.has(`${item.name}:${tag.name}`) ? 'animate-pulse text-primary' : ''}`} />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Run Analysis</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -207,15 +257,40 @@ export function ImageExplorerDrawer({
                             <Badge variant="outline" className="font-mono rounded-none text-xs">
                               {tag}
                             </Badge>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => navigator.clipboard.writeText(`docker pull ghcr.io/${item.name.toLowerCase()}:${tag}`)}
-                              title="Copy pull command"
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => navigator.clipboard.writeText(`docker pull ghcr.io/${item.name.toLowerCase()}:${tag}`)}
+                                  >
+                                    <Copy className="h-3.5 w-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Copy pull command</p>
+                                </TooltipContent>
+                              </Tooltip>
+
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => handleScan(`ghcr.io/${item.name.toLowerCase()}:${tag}`)}
+                                    disabled={scanningTags.has(`ghcr.io/${item.name.toLowerCase()}:${tag}`)}
+                                  >
+                                    <Play className={`h-3.5 w-3.5 ${scanningTags.has(`ghcr.io/${item.name.toLowerCase()}:${tag}`) ? 'animate-pulse text-primary' : ''}`} />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Run Analysis</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
                           </div>
                         ))
                       ) : (
