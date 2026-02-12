@@ -13,6 +13,7 @@ import (
 	"github.com/goodwithtech/dockle/config"
 	"github.com/goodwithtech/dockle/pkg/assessor/credential"
 	"github.com/goodwithtech/dockle/pkg/assessor/manifest"
+	docklelog "github.com/goodwithtech/dockle/pkg/log"
 	"github.com/goodwithtech/dockle/pkg/scanner"
 	"github.com/goodwithtech/dockle/pkg/types"
 )
@@ -104,6 +105,9 @@ func (s *DockleScanner) Init() {
 		ExitLevel: types.WarnLevel,
 	}
 
+	// Initialize Dockle's global logger to avoid panic
+	docklelog.InitLogger(false, false)
+
 	// Configure assessor-specific settings
 	if len(s.config.SensitiveWords) > 0 {
 		manifest.AddSensitiveWords(s.config.SensitiveWords)
@@ -170,7 +174,7 @@ func (s *DockleScanner) ScanImageFromFile(ctx context.Context, filePath string) 
 	return s.doScan(ctx, "", filePath)
 }
 
-func (s *DockleScanner) doScan(ctx context.Context, imageName, filePath string) (*DockleScan, error) {
+func (s *DockleScanner) doScan(ctx context.Context, imageName, filePath string) (scan *DockleScan, err error) {
 	scanID := imageName
 	if scanID == "" {
 		scanID = filePath
@@ -178,6 +182,27 @@ func (s *DockleScanner) doScan(ctx context.Context, imageName, filePath string) 
 
 	start := time.Now()
 	s.log.Info("Starting dockle scan", "image", scanID)
+
+	defer func() {
+		if r := recover(); r != nil {
+			recErr := fmt.Errorf("panic in dockle scan: %v", r)
+			s.log.Error("Recovered from panic in dockle scan",
+				"image", scanID,
+				"error", recErr,
+			)
+			// Create error result
+			scan = &DockleScan{
+				Image:    scanID,
+				ScanTime: time.Now(),
+				Status:   "error",
+				Error:    recErr.Error(),
+			}
+			s.setScan(scanID, scan)
+			// Ensure we return this scan and nil error (or the error itself if preferred, but we have a result object)
+			// Let's return the scan object so it gets marshaled.
+			err = nil
+		}
+	}()
 
 	ctx, cancel := context.WithTimeout(ctx, s.config.Timeout)
 	defer cancel()
@@ -188,16 +213,17 @@ func (s *DockleScanner) doScan(ctx context.Context, imageName, filePath string) 
 	}
 
 	// Call dockle's scanner
-	assessments, err := scanner.ScanImage(ctx, imageName, filePath, dockerOption)
-	if err != nil {
-		scan := &DockleScan{
+	// Note: We need to be careful about global state usage in dockle
+	assessments, scanErr := scanner.ScanImage(ctx, imageName, filePath, dockerOption)
+	if scanErr != nil {
+		scan = &DockleScan{
 			Image:    scanID,
 			ScanTime: time.Now(),
 			Status:   "error",
-			Error:    err.Error(),
+			Error:    scanErr.Error(),
 		}
 		s.setScan(scanID, scan)
-		return scan, fmt.Errorf("dockle scan failed for %s: %w", scanID, err)
+		return scan, fmt.Errorf("dockle scan failed for %s: %w", scanID, scanErr)
 	}
 
 	// Check for latest tag usage (same logic as dockle's pkg/run.go)
@@ -213,7 +239,7 @@ func (s *DockleScanner) doScan(ctx context.Context, imageName, filePath string) 
 	assessmentMap := types.CreateAssessmentMap(assessments, s.ignoreMap, false)
 
 	// Convert to our result format
-	scan := convertAssessmentMap(scanID, assessmentMap)
+	scan = convertAssessmentMap(scanID, assessmentMap)
 	s.setScan(scanID, scan)
 
 	s.log.Info("Dockle scan completed",

@@ -43,7 +43,7 @@ func main() {
 	defer database.Close()
 
 	// Run migrations (add your models here)
-	if err := database.AutoMigrate(db, &models.Integration{}); err != nil {
+	if err := database.AutoMigrate(db, &models.Integration{}, &models.Job{}); err != nil {
 		log.Fatalf("Failed to run database migrations: %v", err)
 	}
 
@@ -111,9 +111,9 @@ func main() {
 	// The interface `queue.Queue` likely has Start/Stop.
 	// If I skip it, I might break the interface contract if I assign to `queue.Queue`.
 	// Let's call it for now to avoid breaking changes, but since no handlers are registered, it does nothing.
-	if err := q.Start(); err != nil {
-		log.Printf("Failed to start job queue: %v", err)
-	}
+	// 	if err := q.Start(); err != nil {
+	// 		log.Printf("Failed to start job queue: %v", err)
+	// 	}
 	defer q.Stop()
 
 	app := fiber.New(fiber.Config{

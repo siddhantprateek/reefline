@@ -330,6 +330,10 @@ func (i *ImageInspector) buildSystemContext(auth *ImageAuth) *types.SystemContex
 		sysCtx.DockerInsecureSkipTLSVerify = types.OptionalBoolTrue
 	}
 
+	// Force Linux/AMD64 platform for consistent analysis
+	sysCtx.OSChoice = "linux"
+	sysCtx.ArchitectureChoice = "amd64"
+
 	return sysCtx
 }
 

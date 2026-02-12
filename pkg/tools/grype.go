@@ -208,6 +208,27 @@ func (s *imageScanner) Enqueue(ctx context.Context, images ...string) {
 	}
 }
 
+// ScanImage performs a synchronous vulnerability scan
+func (s *imageScanner) ScanImage(ctx context.Context, img string) (*Scan, error) {
+	if !s.isInitialized() {
+		return nil, fmt.Errorf("vulnerability scanner not initialized")
+	}
+
+	// Check cache first
+	if sc, ok := s.GetScan(img); ok {
+		return sc, nil
+	}
+
+	sc := newScan(img)
+	s.setScan(img, sc)
+
+	if err := s.scan(ctx, img, sc); err != nil {
+		return nil, err
+	}
+
+	return sc, nil
+}
+
 // scanWorker processes individual image scans like K9s
 func (s *imageScanner) scanWorker(ctx context.Context, img string) {
 	defer s.log.Debug("ScanWorker bailing out!")
