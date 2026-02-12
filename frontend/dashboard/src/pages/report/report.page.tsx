@@ -4,7 +4,6 @@ import {
   Loader2,
   ArrowLeft,
   Download,
-  ExternalLink,
   AlertCircle,
   CheckCircle2,
   TrendingDown,
@@ -222,7 +221,7 @@ export function ReportPage() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Analysis Report</h1>
+                <h1 className="text-2xl font-medium tracking-tight">Report</h1>
                 <p className="text-sm text-muted-foreground mt-1 font-mono">
                   Job ID: {report.job_id}
                 </p>
@@ -279,12 +278,12 @@ export function ReportPage() {
                 icon={Zap}
                 description="Storage optimization"
               />
-              <MetricCard
+              {/* <MetricCard
                 title="Packages"
                 value={measured.total_packages || 0}
                 icon={Package}
                 description={`${proposed.packages_removable || 0} can be removed`}
-              />
+              /> */}
             </div>
 
             {/* Additional Metrics */}
@@ -333,7 +332,7 @@ export function ReportPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle className="text-sm">CVE Breakdown</CardTitle>
                 </CardHeader>
@@ -355,7 +354,7 @@ export function ReportPage() {
                     </span>
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
             </div>
 
             {/* Recommendations */}
