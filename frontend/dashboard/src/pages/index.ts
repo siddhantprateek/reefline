@@ -6,3 +6,4 @@ export * from './editor';
 export * from './integrations';
 export * from './jobs';
 export * from './settings';
+export * from './report';

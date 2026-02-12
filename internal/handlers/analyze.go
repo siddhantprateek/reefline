@@ -95,11 +95,15 @@ func (h *AnalyzeHandler) Handle(c *fiber.Ctx) error {
 
 	// Step 2: Store in DB
 	job := models.Job{
-		ID:       jobID,
-		UserID:   "default-user", // TODO: Auth
-		Status:   models.JobStatusQueued,
-		Scenario: "image_only", // simplified logic
-		Metadata: string(metadataJSON),
+		ID:         jobID,
+		JobID:      jobID,
+		UserID:     "default-user", // TODO: Auth
+		ImageRef:   req.ImageRef,
+		Dockerfile: req.Dockerfile,
+		Status:     models.JobStatusQueued,
+		Scenario:   "image_only", // simplified logic
+		Metadata:   string(metadataJSON),
+		Progress:   0,
 	}
 	if req.Dockerfile != "" && req.ImageRef != "" {
 		job.Scenario = "both"
