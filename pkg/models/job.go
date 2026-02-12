@@ -28,7 +28,7 @@ type Job struct {
 	ImageRef     string         `json:"image_ref"`
 	Dockerfile   string         `json:"dockerfile" gorm:"type:text"`
 	Status       JobStatus      `json:"status" gorm:"index"`
-	Scenario     string         `json:"scenario"`                  // "dockerfile_only", "image_only", "both"
+	Scenario     string         `json:"scenario"`                  // "dockerfile", "image", "both"
 	Metadata     string         `json:"metadata" gorm:"type:text"` // JSON string of Skopeo results, etc.
 	ErrorMessage string         `json:"error_message" gorm:"type:text"`
 	Progress     int            `json:"progress"` // 0-100

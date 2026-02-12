@@ -101,14 +101,14 @@ func (h *AnalyzeHandler) Handle(c *fiber.Ctx) error {
 		ImageRef:   req.ImageRef,
 		Dockerfile: req.Dockerfile,
 		Status:     models.JobStatusQueued,
-		Scenario:   "image_only", // simplified logic
+		Scenario:   "image", // simplified logic
 		Metadata:   string(metadataJSON),
 		Progress:   0,
 	}
 	if req.Dockerfile != "" && req.ImageRef != "" {
 		job.Scenario = "both"
 	} else if req.Dockerfile != "" {
-		job.Scenario = "dockerfile_only"
+		job.Scenario = "dockerfile"
 	}
 
 	if err := database.DB.Create(&job).Error; err != nil {

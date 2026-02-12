@@ -44,7 +44,7 @@ import {
 
 // --- Types ---
 
-type ScenarioType = "dockerfile_only" | "image_only" | "both"
+type ScenarioType = "dockerfile" | "image" | "both"
 
 // --- Components ---
 
@@ -160,7 +160,7 @@ function StatusBadge({
 }
 
 const STATUS_CONFIG: Record<JobStatus, { icon: React.ElementType; label: string; color: string; dotColor: string }> = {
-  COMPLETED: { icon: Check, label: "Completed", color: "text-green-600 dark:text-green-400", dotColor: "bg-green-500" },
+  COMPLETED: { icon: Check, label: "Completed", color: "text-primary", dotColor: "bg-primary" },
   RUNNING: { icon: Activity, label: "Running", color: "text-blue-600 dark:text-blue-400", dotColor: "bg-blue-500" },
   PENDING: { icon: Clock, label: "Pending", color: "text-yellow-600 dark:text-yellow-400", dotColor: "bg-yellow-500" },
   FAILED: { icon: XCircle, label: "Failed", color: "text-red-600 dark:text-red-400", dotColor: "bg-red-500" },
@@ -210,7 +210,7 @@ function JobRow({ job, onClick, onDelete }: JobRowProps) {
       <div className="flex items-start gap-4 min-w-[350px] max-w-[40%]">
         <div className={cn(
           "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 bg-background",
-          job.status === "COMPLETED" && "border-green-500/20 bg-green-500/5",
+          job.status === "COMPLETED" && "border-primary/20 bg-primary/5",
           job.status === "RUNNING" && "border-blue-500/20 bg-blue-500/5",
           job.status === "FAILED" && "border-red-500/20 bg-red-500/5",
           job.status === "PENDING" && "border-yellow-500/20 bg-yellow-500/5",
@@ -269,8 +269,16 @@ function JobRow({ job, onClick, onDelete }: JobRowProps) {
         </div>
 
         <Badge
-          variant={job.status === "COMPLETED" ? "default" : job.status === "FAILED" ? "destructive" : "secondary"}
-          className="text-xs min-w-[80px] justify-center"
+          variant={
+            job.status === "COMPLETED" ? "default" :
+              job.status === "FAILED" ? "destructive" :
+                job.status === "RUNNING" ? "default" :
+                  "secondary"
+          }
+          className={cn(
+            "text-xs min-w-[80px] justify-center",
+            job.status === "RUNNING" && "bg-blue-500/20 hover:bg-blue-600 text-blue-400 "
+          )}
         >
           {statusConfig.label}
         </Badge>
@@ -389,8 +397,14 @@ export function JobsPage() {
         return false
       }
       // 3. Scenario Filter
-      if (selectedScenarios.length > 0 && job.scenario && !selectedScenarios.includes(job.scenario)) {
-        return false
+      if (selectedScenarios.length > 0 && job.scenario) {
+        let normalizedScenario: string = job.scenario
+        if (job.scenario === "dockerfile_only") normalizedScenario = "dockerfile" as ScenarioType
+        if (job.scenario === "image_only") normalizedScenario = "image" as ScenarioType
+
+        if (!selectedScenarios.includes(normalizedScenario as ScenarioType)) {
+          return false
+        }
       }
       return true
     })
@@ -417,7 +431,10 @@ export function JobsPage() {
     const counts: Record<string, number> = {}
     jobs.forEach(job => {
       if (job.scenario) {
-        counts[job.scenario] = (counts[job.scenario] || 0) + 1
+        // Backend might still send old values or we need to normalize
+        if (job.scenario === "dockerfile_only") counts["dockerfile"] = (counts["dockerfile"] || 0) + 1
+        else if (job.scenario === "image_only") counts["image"] = (counts["image"] || 0) + 1
+        else counts[job.scenario] = (counts[job.scenario] || 0) + 1
       }
     })
     return counts
@@ -542,16 +559,16 @@ export function JobsPage() {
               count={jobs.length}
             />
             <CheckboxItem
-              label="Dockerfile Only"
-              checked={selectedScenarios.includes('dockerfile_only')}
-              onChange={(c) => handleScenarioToggle('dockerfile_only', c)}
-              count={scenarioCounts.dockerfile_only || 0}
+              label="Dockerfile"
+              checked={selectedScenarios.includes("dockerfile")}
+              onChange={(c) => handleScenarioToggle("dockerfile", c)}
+              count={scenarioCounts.dockerfile || 0}
             />
             <CheckboxItem
-              label="Image Only"
-              checked={selectedScenarios.includes('image_only')}
-              onChange={(c) => handleScenarioToggle('image_only', c)}
-              count={scenarioCounts.image_only || 0}
+              label="Image"
+              checked={selectedScenarios.includes("image")}
+              onChange={(c) => handleScenarioToggle("image", c)}
+              count={scenarioCounts.image || 0}
             />
             <CheckboxItem
               label="Both"
