@@ -221,7 +221,7 @@ export async function testCredentials(
     method: "POST",
     body: JSON.stringify({
       data: encodeCredentials(credentials),
-      test_only: false,
+      test_only: true,
     }),
   });
 }
