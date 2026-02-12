@@ -149,3 +149,32 @@ func (q *InMemoryQueue) GetJobStatus(ctx context.Context, jobID string) (string,
 	}
 	return status, nil
 }
+
+func (q *InMemoryQueue) Stats(ctx context.Context) (*QueueStats, error) {
+	q.mu.RLock()
+	defer q.mu.RUnlock()
+
+	stats := &QueueStats{
+		Active:    0,
+		Pending:   len(q.jobs), // Jobs in channel
+		Scheduled: 0,
+		Completed: 0,
+		Failed:    0,
+	}
+
+	// Count jobs by status
+	for _, status := range q.jobStatus {
+		switch status {
+		case "processing":
+			stats.Active++
+		case "queued":
+			stats.Pending++
+		case "completed":
+			stats.Completed++
+		case "failed":
+			stats.Failed++
+		}
+	}
+
+	return stats, nil
+}

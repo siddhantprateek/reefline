@@ -107,3 +107,19 @@ func (q *RedisQueue) GetJobStatus(ctx context.Context, jobID string) (string, er
 	}
 	return taskInfo.State.String(), nil
 }
+
+func (q *RedisQueue) Stats(ctx context.Context) (*QueueStats, error) {
+	// Get queue info for default queue
+	queueInfo, err := q.inspector.GetQueueInfo("default")
+	if err != nil {
+		return nil, err
+	}
+
+	return &QueueStats{
+		Active:    queueInfo.Active,
+		Pending:   queueInfo.Pending,
+		Scheduled: queueInfo.Scheduled,
+		Completed: queueInfo.Completed,
+		Failed:    queueInfo.Failed,
+	}, nil
+}

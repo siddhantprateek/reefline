@@ -1,11 +1,11 @@
 import {
   SiDocker,
   SiGithub,
-  SiOpenai,
   SiAnthropic,
   SiGoogle,
 } from "@icons-pack/react-simple-icons";
 import { HarborIcon, OpenRouterIcon } from "@/assets/icons";
+import { Sparkles, Brain } from "lucide-react";
 
 // Field types for dynamic form generation
 export type FieldType = "text" | "password" | "url";
@@ -110,7 +110,7 @@ export const integrationSchemas: IntegrationSchema[] = [
     name: "OpenAI",
     description: "Access GPT models and other AI capabilities from OpenAI's API platform.",
     category: "AI Provider",
-    icon: SiOpenai,
+    icon: Sparkles,
     status: "disconnected",
     fields: [
       {

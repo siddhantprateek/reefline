@@ -46,10 +46,12 @@ func ProcessAnalyzeJob(ctx context.Context, payload []byte) error {
 
 	log.Printf("[Worker] Starting analysis job %s for image: %s", data.JobID, target)
 
-	// Update Job status to RUNNING
+	// Update Job status to RUNNING and set StartedAt timestamp
+	startedAt := time.Now()
 	if err := database.DB.Model(&models.Job{}).Where("job_id = ?", data.JobID).Updates(map[string]interface{}{
-		"status":   models.JobStatusRunning,
-		"progress": 0,
+		"status":     models.JobStatusRunning,
+		"progress":   0,
+		"started_at": startedAt,
 	}).Error; err != nil {
 		log.Printf("[Worker] Failed to update job status to RUNNING: %v", err)
 	}
@@ -57,12 +59,34 @@ func ProcessAnalyzeJob(ctx context.Context, payload []byte) error {
 	bucket := storage.GetConfigFromEnv().DefaultBucket
 	hasErrors := false
 
+	// Initialize tool metrics map
+	type ToolMetric struct {
+		StartedAt   string `json:"started_at"`
+		CompletedAt string `json:"completed_at"`
+		DurationMs  int64  `json:"duration_ms"`
+		Success     bool   `json:"success"`
+		Error       string `json:"error,omitempty"`
+	}
+	toolMetrics := make(map[string]ToolMetric)
+
 	// 1. Run Grype Scan
 	if tools.ImgScanner != nil && tools.ImgScanner.IsEnabled() {
 		log.Printf("[Worker] Running Grype scan for %s...", target)
 		database.DB.Model(&models.Job{}).Where("job_id = ?", data.JobID).Update("progress", 10)
 
+		grypeStart := time.Now()
 		scanResult, err := tools.ImgScanner.ScanImage(ctx, target)
+		grypeEnd := time.Now()
+		grypeDuration := grypeEnd.Sub(grypeStart)
+
+		toolMetrics["grype"] = ToolMetric{
+			StartedAt:   grypeStart.Format(time.RFC3339),
+			CompletedAt: grypeEnd.Format(time.RFC3339),
+			DurationMs:  grypeDuration.Milliseconds(),
+			Success:     err == nil,
+			Error:       func() string { if err != nil { return err.Error() }; return "" }(),
+		}
+
 		if err != nil {
 			log.Printf("[Worker] Grype scan failed: %v", err)
 			hasErrors = true
@@ -90,7 +114,19 @@ func ProcessAnalyzeJob(ctx context.Context, payload []byte) error {
 		log.Printf("[Worker] Running Dockle scan for %s...", target)
 		database.DB.Model(&models.Job{}).Where("job_id = ?", data.JobID).Update("progress", 40)
 
+		dockleStart := time.Now()
 		dockleResult, err := tools.DockleScn.ScanImage(ctx, target)
+		dockleEnd := time.Now()
+		dockleDuration := dockleEnd.Sub(dockleStart)
+
+		toolMetrics["dockle"] = ToolMetric{
+			StartedAt:   dockleStart.Format(time.RFC3339),
+			CompletedAt: dockleEnd.Format(time.RFC3339),
+			DurationMs:  dockleDuration.Milliseconds(),
+			Success:     err == nil,
+			Error:       func() string { if err != nil { return err.Error() }; return "" }(),
+		}
+
 		if err != nil {
 			log.Printf("[Worker] Dockle scan failed: %v", err)
 			hasErrors = true
@@ -118,7 +154,19 @@ func ProcessAnalyzeJob(ctx context.Context, payload []byte) error {
 		log.Printf("[Worker] Running Dive analysis for %s...", target)
 		database.DB.Model(&models.Job{}).Where("job_id = ?", data.JobID).Update("progress", 70)
 
+		diveStart := time.Now()
 		diveResult, err := tools.DiveAnalyzer.AnalyzeImage(ctx, target)
+		diveEnd := time.Now()
+		diveDuration := diveEnd.Sub(diveStart)
+
+		toolMetrics["dive"] = ToolMetric{
+			StartedAt:   diveStart.Format(time.RFC3339),
+			CompletedAt: diveEnd.Format(time.RFC3339),
+			DurationMs:  diveDuration.Milliseconds(),
+			Success:     err == nil,
+			Error:       func() string { if err != nil { return err.Error() }; return "" }(),
+		}
+
 		if err != nil {
 			log.Printf("[Worker] Dive analysis failed: %v", err)
 			hasErrors = true
@@ -150,10 +198,18 @@ func ProcessAnalyzeJob(ctx context.Context, payload []byte) error {
 		finalStatus = models.JobStatusFailed
 	}
 
+	// Serialize tool metrics to JSON
+	toolMetricsJSON, err := json.Marshal(toolMetrics)
+	if err != nil {
+		log.Printf("[Worker] Failed to marshal tool metrics: %v", err)
+		toolMetricsJSON = []byte("{}")
+	}
+
 	if err := database.DB.Model(&models.Job{}).Where("job_id = ?", data.JobID).Updates(map[string]interface{}{
 		"status":       finalStatus,
 		"progress":     100,
 		"completed_at": completedAt,
+		"tool_metrics": string(toolMetricsJSON),
 	}).Error; err != nil {
 		log.Printf("[Worker] Failed to update job final status: %v", err)
 	}

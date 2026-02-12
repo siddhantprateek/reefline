@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -94,6 +95,7 @@ func (h *AnalyzeHandler) Handle(c *fiber.Ctx) error {
 	}
 
 	// Step 2: Store in DB
+	queuedAt := time.Now()
 	job := models.Job{
 		ID:         jobID,
 		JobID:      jobID,
@@ -104,6 +106,7 @@ func (h *AnalyzeHandler) Handle(c *fiber.Ctx) error {
 		Scenario:   "image", // simplified logic
 		Metadata:   string(metadataJSON),
 		Progress:   0,
+		QueuedAt:   &queuedAt,
 	}
 	if req.Dockerfile != "" && req.ImageRef != "" {
 		job.Scenario = "both"

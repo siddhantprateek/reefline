@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { Home, Settings, Moon, Sun, Monitor, ChevronLeft, ChevronRight, Palette, Scan, Sparkles, Container, History, LogOut, User } from "lucide-react"
+import { Home, Settings, Moon, Sun, Monitor, ChevronLeft, ChevronRight, Palette, Scan, Sparkles, Container, History, LogOut, User, BarChart3 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -52,6 +52,12 @@ export function Sidebar({ isCollapsed = false, toggleSidebar }: SidebarProps) {
             <Link to="/jobs">
               <History className="h-5 w-5 shrink-0" />
               {!isCollapsed && <span>Jobs</span>}
+            </Link>
+          </Button>
+          <Button variant="ghost" className={cn("justify-start gap-3", isCollapsed && "justify-center px-2")} asChild>
+            <Link to="/analytics">
+              <BarChart3 className="h-5 w-5 shrink-0" />
+              {!isCollapsed && <span>Analytics</span>}
             </Link>
           </Button>
           <Button variant="ghost" className={cn("justify-start gap-3", isCollapsed && "justify-center px-2")} asChild>

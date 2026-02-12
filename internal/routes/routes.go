@@ -15,6 +15,7 @@ func Setup(app *fiber.App, q queue.Queue) {
 	setupJobRoutes(api, q)
 	setupCompareRoutes(api)
 	setupIntegrationRoutes(api)
+	setupMetricsRoutes(api, q)
 }
 
 // setupHealthRoutes configures health check endpoints
@@ -125,4 +126,20 @@ func setupIntegrationRoutes(api fiber.Router) {
 
 	// GET /api/v1/integrations/harbor/projects/:project/repos/:repo/artifacts         — List artifacts
 	harbor.Get("/projects/:project/repos/:repo/artifacts", integrationHandler.ListHarborArtifacts)
+}
+
+// setupMetricsRoutes configures analytics and metrics endpoints
+func setupMetricsRoutes(api fiber.Router, q queue.Queue) {
+	metricsHandler := handlers.NewMetricsHandler(q)
+
+	metrics := api.Group("/metrics")
+
+	// GET /api/v1/metrics/queue — Real-time queue statistics
+	metrics.Get("/queue", metricsHandler.GetQueueStats)
+
+	// GET /api/v1/metrics/jobs?time_range=24h|7d|30d — Job metrics and trends
+	metrics.Get("/jobs", metricsHandler.GetJobMetrics)
+
+	// GET /api/v1/metrics/tools — Tool performance metrics
+	metrics.Get("/tools", metricsHandler.GetToolPerformance)
 }

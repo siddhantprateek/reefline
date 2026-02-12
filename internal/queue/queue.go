@@ -29,6 +29,18 @@ type Queue interface {
 
 	// GetJobStatus returns the status of a job
 	GetJobStatus(ctx context.Context, jobID string) (string, error)
+
+	// Stats returns queue statistics
+	Stats(ctx context.Context) (*QueueStats, error)
+}
+
+// QueueStats represents queue statistics
+type QueueStats struct {
+	Active    int `json:"active"`
+	Pending   int `json:"pending"`
+	Scheduled int `json:"scheduled"`
+	Completed int `json:"completed"`
+	Failed    int `json:"failed"`
 }
 
 // Option represents queue options (e.g., delay, priority)

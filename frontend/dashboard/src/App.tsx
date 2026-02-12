@@ -9,7 +9,8 @@ import {
   IntegrationsPage,
   JobsPage,
   ReportPage,
-  SettingsPage
+  SettingsPage,
+  AnalyticsPage
 } from "@/pages"
 import { Toaster } from "@/components/ui/toaster"
 
@@ -25,6 +26,7 @@ function App() {
           <Route path="integrations" element={<IntegrationsPage />} />
           <Route path="jobs" element={<JobsPage />} />
           <Route path="jobs/:jobId" element={<ReportPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
