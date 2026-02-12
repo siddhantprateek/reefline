@@ -95,7 +95,30 @@ func ProcessAnalyzeJob(ctx context.Context, payload []byte) error {
 		}
 	}
 
-	// 3. (Future) LLM Analysis triggers here?
+	// 3. Run Dive Analysis
+	if tools.DiveAnalyzer != nil && tools.DiveAnalyzer.IsEnabled() {
+		log.Printf("[Worker] Running Dive analysis for %s...", target)
+		diveResult, err := tools.DiveAnalyzer.AnalyzeImage(ctx, target)
+		if err != nil {
+			log.Printf("[Worker] Dive analysis failed: %v", err)
+		} else {
+			// Upload Dive result
+			resultJSON, _ := json.Marshal(diveResult)
+			reader := bytes.NewReader(resultJSON)
+			objectName := fmt.Sprintf("%s/artifacts/dive.json", data.JobID)
+
+			_, err := storage.Client.PutObject(ctx, bucket, objectName, reader, int64(len(resultJSON)), minio.PutObjectOptions{
+				ContentType: "application/json",
+			})
+			if err != nil {
+				log.Printf("[Worker] Failed to upload dive.json: %v", err)
+			} else {
+				log.Printf("[Worker] Uploaded dive.json to %s/%s", bucket, objectName)
+			}
+		}
+	}
+
+	// 4. (Future) LLM Analysis triggers here?
 
 	log.Printf("[Worker] Finished analysis job %s for: %s", data.JobID, target)
 	return nil

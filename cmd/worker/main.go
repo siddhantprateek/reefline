@@ -106,6 +106,26 @@ func main() {
 		log.Println("Image inspector is disabled (set IMAGE_INSPECTOR_ENABLED=true to enable)")
 	}
 
+	// Initialize dive analyzer (image layer efficiency analysis)
+	enableDive := os.Getenv("DIVE_ANALYZER_ENABLED")
+	if enableDive == "true" {
+		log.Println("Initializing dive analyzer...")
+		diveConfig := tools.DiveConfig{
+			Enable:       true,
+			Source:       os.Getenv("DIVE_IMAGE_SOURCE"),
+			IgnoreErrors: os.Getenv("DIVE_IGNORE_ERRORS") == "true",
+		}
+		// Default to docker if not specified
+		if diveConfig.Source == "" {
+			diveConfig.Source = "docker"
+		}
+		tools.DiveAnalyzer = tools.NewDiveAnalyzer(diveConfig, slog.Default())
+		tools.DiveAnalyzer.Init()
+		log.Println("Dive analyzer initialized (image efficiency analysis)")
+	} else {
+		log.Println("Dive analyzer is disabled (set DIVE_ANALYZER_ENABLED=true to enable)")
+	}
+
 	// Initialize Job Queue
 	var q queue.Queue
 	redisHost := os.Getenv("REDIS_HOST")
@@ -156,6 +176,12 @@ func main() {
 	if tools.ImgInspector != nil {
 		log.Println("Stopping image inspector...")
 		tools.ImgInspector.Stop()
+	}
+
+	// Stop dive analyzer if initialized
+	if tools.DiveAnalyzer != nil {
+		log.Println("Stopping dive analyzer...")
+		tools.DiveAnalyzer.Stop()
 	}
 
 	q.Stop()
