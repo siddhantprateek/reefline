@@ -20,13 +20,15 @@ import { ImageExplorerDrawer } from "@/components/custom/image-explorer-drawer/i
 import {
   type GitHubContainerImage,
   type DockerHubRepo,
+  type KubernetesContainerImage,
   listGitHubContainerImages,
   listDockerHubRepos,
+  listKubernetesImages,
 } from "@/api/integration.api"
 
 // --- Types ---
 
-type RegistryType = "github" | "docker"
+type RegistryType = "github" | "docker" | "kubernetes"
 type VisibilityType = "public" | "private"
 
 export interface UnifiedImageItem {
@@ -117,6 +119,7 @@ interface ImageRowProps {
 
 function ImageRow({ item, onClick }: ImageRowProps) {
   const isGithub = item.registry === 'github'
+  const isK8s = item.registry === 'kubernetes'
 
   return (
     <div
@@ -128,11 +131,15 @@ function ImageRow({ item, onClick }: ImageRowProps) {
       <div className="flex items-start gap-4 min-w-[300px] max-w-[40%]">
         <div className={cn(
           "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-background",
-          isGithub ? "border-neutral-200 dark:border-neutral-800" : "border-blue-200 dark:border-blue-900"
+          isGithub ? "border-neutral-200 dark:border-neutral-800"
+            : isK8s ? "border-purple-200 dark:border-purple-900"
+            : "border-blue-200 dark:border-blue-900"
         )}>
           <Package className={cn(
             "h-5 w-5",
-            isGithub ? "text-neutral-600 dark:text-neutral-400" : "text-blue-600 dark:text-blue-400"
+            isGithub ? "text-neutral-600 dark:text-neutral-400"
+              : isK8s ? "text-purple-600 dark:text-purple-400"
+              : "text-blue-600 dark:text-blue-400"
           )} />
         </div>
 
@@ -202,6 +209,7 @@ function ImageRow({ item, onClick }: ImageRowProps) {
 export function OverviewPage() {
   const [ghImages, setGhImages] = useState<GitHubContainerImage[]>([])
   const [dockerRepos, setDockerRepos] = useState<DockerHubRepo[]>([])
+  const [k8sImages, setK8sImages] = useState<KubernetesContainerImage[]>([])
 
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -225,9 +233,10 @@ export function OverviewPage() {
   const fetchData = async () => {
     try {
       setError(null)
-      const [ghData, dockerData] = await Promise.allSettled([
+      const [ghData, dockerData, k8sData] = await Promise.allSettled([
         listGitHubContainerImages(),
         listDockerHubRepos(),
+        listKubernetesImages(),
       ])
 
       if (ghData.status === "fulfilled") {
@@ -240,6 +249,12 @@ export function OverviewPage() {
         setDockerRepos(dockerData.value)
       } else {
         console.error("Failed to fetch Docker repos:", dockerData.reason)
+      }
+
+      if (k8sData.status === "fulfilled") {
+        setK8sImages(k8sData.value)
+      } else {
+        console.warn("Kubernetes not available or not in-cluster:", k8sData.reason)
       }
     } catch (err) {
       setError("Failed to load some data")
@@ -285,8 +300,18 @@ export function OverviewPage() {
       private: repo.is_private
     }))
 
-    return [...ghItems, ...dockerItems].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-  }, [ghImages, dockerRepos])
+    const k8sItems: UnifiedImageItem[] = k8sImages.map((img, idx) => ({
+      id: `k8s-${img.namespace}-${img.pod_name}-${img.container_name}-${idx}`,
+      name: img.image,
+      registry: 'kubernetes',
+      description: `${img.namespace} / ${img.pod_name}${img.is_init ? " (init)" : ""}`,
+      tags: [img.namespace],
+      updatedAt: new Date(),
+      private: true,
+    }))
+
+    return [...ghItems, ...dockerItems, ...k8sItems].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  }, [ghImages, dockerRepos, k8sImages])
 
   // Filtering
   const filteredItems = useMemo(() => {
@@ -317,6 +342,7 @@ export function OverviewPage() {
   // Stats for sidebar counts
   const ghCount = unifiedItems.filter(i => i.registry === 'github').length
   const dockerCount = unifiedItems.filter(i => i.registry === 'docker').length
+  const k8sCount = unifiedItems.filter(i => i.registry === 'kubernetes').length
 
   const privateCount = unifiedItems.filter(i => i.private === true).length
   const publicCount = unifiedItems.filter(i => !i.private).length
@@ -399,6 +425,12 @@ export function OverviewPage() {
               checked={selectedRegistries.includes('docker')}
               onChange={(c) => handleRegistryToggle('docker', c)}
               count={dockerCount}
+            />
+            <CheckboxItem
+              label="Kubernetes"
+              checked={selectedRegistries.includes('kubernetes')}
+              onChange={(c) => handleRegistryToggle('kubernetes', c)}
+              count={k8sCount}
             />
           </FilterSection>
 

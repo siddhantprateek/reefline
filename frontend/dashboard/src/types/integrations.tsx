@@ -5,7 +5,7 @@ import {
   SiGoogle,
 } from "@icons-pack/react-simple-icons";
 import { HarborIcon, OpenRouterIcon } from "@/assets/icons";
-import { Sparkles, Brain } from "lucide-react";
+import { Sparkles, Brain, Container } from "lucide-react";
 
 // Field types for dynamic form generation
 export type FieldType = "text" | "password" | "url";
@@ -23,14 +23,26 @@ export interface IntegrationSchema {
   id: string;
   name: string;
   description: string;
-  category: "Container Registry" | "Version Control" | "AI Provider";
+  category: "Container Registry" | "Version Control" | "AI Provider" | "Orchestration";
   icon: React.ComponentType<{ size?: number; className?: string }>;
   fields: IntegrationField[];
   status?: "connected" | "disconnected";
+  /** When true, the integration is auto-detected — no credentials dialog is shown */
+  noCredentials?: boolean;
 }
 
 // Integration schemas with their required fields
 export const integrationSchemas: IntegrationSchema[] = [
+  {
+    id: "kubernetes",
+    name: "Kubernetes",
+    description: "Auto-detected when running inside a Kubernetes cluster. Lists all container images across namespaces — no credentials required.",
+    category: "Orchestration",
+    icon: Container,
+    status: "disconnected",
+    noCredentials: true,
+    fields: [],
+  },
   {
     id: "docker",
     name: "Docker",

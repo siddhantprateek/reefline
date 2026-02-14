@@ -13,6 +13,7 @@ import (
 	"github.com/siddhantprateek/reefline/internal/integration/dockerhub"
 	"github.com/siddhantprateek/reefline/internal/integration/github"
 	"github.com/siddhantprateek/reefline/internal/integration/harbor"
+	k8s "github.com/siddhantprateek/reefline/internal/integration/kubernetes"
 	"github.com/siddhantprateek/reefline/pkg/crypto"
 	"github.com/siddhantprateek/reefline/pkg/database"
 	"github.com/siddhantprateek/reefline/pkg/models"
@@ -28,7 +29,7 @@ func NewIntegrationHandler() *IntegrationHandler {
 
 // knownIntegrations lists all supported integration IDs
 var knownIntegrations = []string{
-	"docker", "harbor", "github",
+	"docker", "harbor", "github", "kubernetes",
 	"openai", "anthropic", "google", "openrouter",
 }
 
@@ -62,12 +63,23 @@ func (h *IntegrationHandler) List(c *fiber.Ctx) error {
 		storedMap[stored[i].IntegrationID] = &stored[i]
 	}
 
+	// Check if Kubernetes in-cluster is available (no credentials needed)
+	k8sAvailable := k8s.IsAvailable()
+
 	// Build response list — includes all known integrations, merged with stored status
 	integrations := make([]integrationStatusResponse, 0, len(knownIntegrations))
 	for _, id := range knownIntegrations {
 		resp := integrationStatusResponse{
 			ID:     id,
 			Status: "disconnected",
+		}
+		// Kubernetes is auto-detected; no stored credentials required
+		if id == "kubernetes" {
+			if k8sAvailable {
+				resp.Status = "connected"
+			}
+			integrations = append(integrations, resp)
+			continue
 		}
 		if s, ok := storedMap[id]; ok {
 			resp.Status = s.Status
@@ -521,6 +533,114 @@ func (h *IntegrationHandler) ListHarborArtifacts(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(artifacts)
+}
+
+// === Kubernetes-specific endpoints ===
+
+// GetKubernetesStatus returns whether the app is running in-cluster and basic cluster info.
+//
+// GET /api/v1/integrations/kubernetes/status
+func (h *IntegrationHandler) GetKubernetesStatus(c *fiber.Ctx) error {
+	if !k8s.IsAvailable() {
+		return c.JSON(fiber.Map{
+			"id":        "kubernetes",
+			"status":    "disconnected",
+			"available": false,
+			"message":   "Not running inside a Kubernetes cluster",
+		})
+	}
+
+	client, err := k8s.NewInClusterClient()
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"id":        "kubernetes",
+			"status":    "error",
+			"available": false,
+			"error":     err.Error(),
+		})
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	info, err := client.GetClusterInfo(ctx)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"id":        "kubernetes",
+			"status":    "error",
+			"available": true,
+			"error":     err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"id":        "kubernetes",
+		"status":    "connected",
+		"available": true,
+		"metadata":  info,
+	})
+}
+
+// ListKubernetesImages lists all container images running in the cluster.
+//
+// GET /api/v1/integrations/kubernetes/images
+func (h *IntegrationHandler) ListKubernetesImages(c *fiber.Ctx) error {
+	if !k8s.IsAvailable() {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+			"error": "Not running inside a Kubernetes cluster",
+		})
+	}
+
+	client, err := k8s.NewInClusterClient()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to create Kubernetes client: %v", err),
+		})
+	}
+
+	namespace := c.Query("namespace", "")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	images, err := client.ListContainerImages(ctx, namespace)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to list container images: %v", err),
+		})
+	}
+
+	return c.JSON(images)
+}
+
+// ListKubernetesNamespaces lists all namespaces in the cluster.
+//
+// GET /api/v1/integrations/kubernetes/namespaces
+func (h *IntegrationHandler) ListKubernetesNamespaces(c *fiber.Ctx) error {
+	if !k8s.IsAvailable() {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+			"error": "Not running inside a Kubernetes cluster",
+		})
+	}
+
+	client, err := k8s.NewInClusterClient()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to create Kubernetes client: %v", err),
+		})
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	namespaces, err := client.ListNamespaces(ctx)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to list namespaces: %v", err),
+		})
+	}
+
+	return c.JSON(fiber.Map{"namespaces": namespaces})
 }
 
 // ─── Helper functions ────────────────────────────────────────────────────────

@@ -15,6 +15,7 @@ export interface IntegrationCardProps {
   icon: React.ComponentType<{ size?: number; className?: string }>;
   category: string;
   status?: "connected" | "disconnected";
+  noCredentials?: boolean;
   onSetup: () => void;
   onDisable?: () => void;
   onRemove?: () => void;
@@ -26,6 +27,7 @@ export function IntegrationCard({
   icon: Icon,
   category,
   status = "disconnected",
+  noCredentials = false,
   onSetup,
   onDisable,
   onRemove,
@@ -48,8 +50,12 @@ export function IntegrationCard({
             </div>
           </div>
 
-          {/* Right side - Plus icon or Configured with dropdown */}
-          {status === "disconnected" ? (
+          {/* Right side - Auto-detected badge, Plus icon, or Configured with dropdown */}
+          {noCredentials && status === "disconnected" ? (
+            <Badge variant="outline" className="text-xs text-muted-foreground border-dashed">
+              Auto-detected
+            </Badge>
+          ) : status === "disconnected" ? (
             <Button
               variant="ghost"
               size="icon"
@@ -58,6 +64,10 @@ export function IntegrationCard({
             >
               <Plus className="h-5 w-5 text-primary" />
             </Button>
+          ) : noCredentials ? (
+            <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20">
+              In-cluster
+            </Badge>
           ) : (
             <div className="flex items-center gap-2">
               <Badge className="bg-green-500/10 text-green-600 border-green-500/20">

@@ -83,6 +83,28 @@ export interface DockerHubTag {
   digest: string;
 }
 
+// Kubernetes-specific types
+export interface KubernetesContainerImage {
+  image: string;
+  pod_name: string;
+  namespace: string;
+  container_name: string;
+  is_init: boolean;
+}
+
+export interface KubernetesStatus {
+  id: string;
+  status: "connected" | "disconnected" | "error";
+  available: boolean;
+  message?: string;
+  error?: string;
+  metadata?: {
+    server_version: string;
+    node_count: number;
+    namespace_count: number;
+  };
+}
+
 // Harbor-specific types
 export interface HarborProject {
   project_id: number;
@@ -355,7 +377,38 @@ export async function listHarborArtifacts(
   page = 1,
   pageSize = 20,
 ): Promise<HarborArtifact[]> {
+
   return request<HarborArtifact[]>(
     `${API_BASE}/harbor/projects/${project}/repos/${repo}/artifacts?page=${page}&page_size=${pageSize}`,
   );
+}
+
+// ─── Kubernetes-specific endpoints ───────────────────────────────────────────
+
+/**
+ * Get Kubernetes in-cluster status and cluster metadata.
+ * Returns connected/disconnected based on whether the app is running in-cluster.
+ */
+export async function getKubernetesStatus(): Promise<KubernetesStatus> {
+  return request<KubernetesStatus>(`${API_BASE}/kubernetes/status`);
+}
+
+/**
+ * List all container images currently running in the Kubernetes cluster.
+ * Optionally filter by namespace.
+ */
+export async function listKubernetesImages(
+  namespace?: string,
+): Promise<KubernetesContainerImage[]> {
+  const params = namespace ? `?namespace=${encodeURIComponent(namespace)}` : "";
+  return request<KubernetesContainerImage[]>(
+    `${API_BASE}/kubernetes/images${params}`,
+  );
+}
+
+/**
+ * List all namespaces in the Kubernetes cluster.
+ */
+export async function listKubernetesNamespaces(): Promise<{ namespaces: string[] }> {
+  return request<{ namespaces: string[] }>(`${API_BASE}/kubernetes/namespaces`);
 }

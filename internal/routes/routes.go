@@ -120,6 +120,18 @@ func setupIntegrationRoutes(api fiber.Router) {
 	// GET /api/v1/integrations/docker/repos/:namespace/:repo/tags   — List tags for a repo
 	docker.Get("/repos/:namespace/:repo/tags", integrationHandler.ListDockerHubTags)
 
+	// === Kubernetes-specific endpoints ===
+	k8s := integrations.Group("/kubernetes")
+
+	// GET /api/v1/integrations/kubernetes/status     — In-cluster availability + cluster info
+	k8s.Get("/status", integrationHandler.GetKubernetesStatus)
+
+	// GET /api/v1/integrations/kubernetes/images     — List all container images in the cluster
+	k8s.Get("/images", integrationHandler.ListKubernetesImages)
+
+	// GET /api/v1/integrations/kubernetes/namespaces — List all namespaces
+	k8s.Get("/namespaces", integrationHandler.ListKubernetesNamespaces)
+
 	// === Harbor-specific endpoints ===
 	harbor := integrations.Group("/harbor")
 

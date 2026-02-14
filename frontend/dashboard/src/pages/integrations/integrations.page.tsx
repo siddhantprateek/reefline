@@ -44,6 +44,8 @@ export function IntegrationsPage() {
   }));
 
   const handleSetup = (integration: IntegrationSchema) => {
+    // Kubernetes (and any noCredentials integration) is auto-detected — nothing to configure
+    if (integration.noCredentials) return;
     setSelectedIntegration(integration);
     setIsDialogOpen(true);
   };
@@ -169,6 +171,7 @@ export function IntegrationsPage() {
             icon={integration.icon}
             category={integration.category}
             status={integration.status}
+            noCredentials={integration.noCredentials}
             onSetup={() => handleSetup(integration)}
             onDisable={() => handleDisable(integration)}
             onRemove={() => handleRemove(integration)}
