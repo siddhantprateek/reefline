@@ -133,13 +133,13 @@ function ImageRow({ item, onClick }: ImageRowProps) {
           "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-background",
           isGithub ? "border-neutral-200 dark:border-neutral-800"
             : isK8s ? "border-purple-200 dark:border-purple-900"
-            : "border-blue-200 dark:border-blue-900"
+              : "border-blue-200 dark:border-blue-900"
         )}>
           <Package className={cn(
             "h-5 w-5",
             isGithub ? "text-neutral-600 dark:text-neutral-400"
               : isK8s ? "text-purple-600 dark:text-purple-400"
-              : "text-blue-600 dark:text-blue-400"
+                : "text-blue-600 dark:text-blue-400"
           )} />
         </div>
 

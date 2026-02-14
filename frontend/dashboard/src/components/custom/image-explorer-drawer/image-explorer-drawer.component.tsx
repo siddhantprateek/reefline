@@ -25,7 +25,7 @@ import { analyzeImage } from "@/api/jobs.api"
 interface UnifiedImageItem {
   id: string
   name: string
-  registry: "github" | "docker"
+  registry: "github" | "docker" | "kubernetes"
   description?: string
   tags: string[]
   updatedAt: string | Date
@@ -262,6 +262,49 @@ export function ImageExplorerDrawer({
                           </div>
                         </div>
                       ))}
+
+                      {/* Kubernetes — direct scan of the full image reference */}
+                      {item.registry === 'kubernetes' && (
+                        <div className="flex flex-col gap-3 p-2">
+                          <p className="text-xs text-muted-foreground">
+                            This image is running inside your Kubernetes cluster. You can scan it directly using the full image reference below.
+                          </p>
+                          <div className="flex items-center justify-between border p-3 hover:bg-muted/30 transition-colors">
+                            <Badge variant="outline" className="font-mono rounded-none text-xs truncate max-w-[260px]">
+                              {item.name}
+                            </Badge>
+                            <div className="flex items-center gap-1">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => navigator.clipboard.writeText(`docker pull ${item.name}`)}
+                                  >
+                                    <Copy className="h-3.5 w-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Copy pull command</p></TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => handleScan(item.name)}
+                                    disabled={scanningTags.has(item.name)}
+                                  >
+                                    <Play className={`h-3.5 w-3.5 ${scanningTags.has(item.name) ? 'animate-pulse text-primary' : ''}`} />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Run Analysis</p></TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* GitHub Tags (Simple list since API provides less detail in current endpoint) */}
                       {item.registry === 'github' && (
