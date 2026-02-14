@@ -12,8 +12,8 @@ type ModelInfo struct {
 // Default models per provider — used when the user hasn't explicitly configured a model.
 var defaultModels = map[Provider]ModelInfo{
 	ProviderOpenAI: {
-		ID:       "gpt-4o",
-		Name:     "GPT-4o",
+		ID:       "gpt-4o-mini",
+		Name:     "GPT-4o Mini",
 		Provider: ProviderOpenAI,
 	},
 	ProviderAnthropic: {
