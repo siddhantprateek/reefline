@@ -5,7 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"os"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -84,7 +87,12 @@ func ProcessAnalyzeJob(ctx context.Context, payload []byte) error {
 			CompletedAt: grypeEnd.Format(time.RFC3339),
 			DurationMs:  grypeDuration.Milliseconds(),
 			Success:     err == nil,
-			Error:       func() string { if err != nil { return err.Error() }; return "" }(),
+			Error: func() string {
+				if err != nil {
+					return err.Error()
+				}
+				return ""
+			}(),
 		}
 
 		if err != nil {
@@ -124,7 +132,12 @@ func ProcessAnalyzeJob(ctx context.Context, payload []byte) error {
 			CompletedAt: dockleEnd.Format(time.RFC3339),
 			DurationMs:  dockleDuration.Milliseconds(),
 			Success:     err == nil,
-			Error:       func() string { if err != nil { return err.Error() }; return "" }(),
+			Error: func() string {
+				if err != nil {
+					return err.Error()
+				}
+				return ""
+			}(),
 		}
 
 		if err != nil {
@@ -164,7 +177,12 @@ func ProcessAnalyzeJob(ctx context.Context, payload []byte) error {
 			CompletedAt: diveEnd.Format(time.RFC3339),
 			DurationMs:  diveDuration.Milliseconds(),
 			Success:     err == nil,
-			Error:       func() string { if err != nil { return err.Error() }; return "" }(),
+			Error: func() string {
+				if err != nil {
+					return err.Error()
+				}
+				return ""
+			}(),
 		}
 
 		if err != nil {
@@ -189,7 +207,15 @@ func ProcessAnalyzeJob(ctx context.Context, payload []byte) error {
 		database.DB.Model(&models.Job{}).Where("job_id = ?", data.JobID).Update("progress", 95)
 	}
 
-	// 4. (Future) LLM Analysis triggers here?
+	// 4. Trigger flow service to generate AI report
+	flowURL := os.Getenv("FLOW_SERVICE_URL")
+	if flowURL == "" {
+		flowURL = "http://localhost:8000"
+	}
+	if err := triggerFlowReport(ctx, flowURL, data.JobID, "openai"); err != nil {
+		log.Printf("[Worker] Flow report generation failed for job %s: %v", data.JobID, err)
+		// Non-fatal — scans are still stored
+	}
 
 	// Update final job status
 	completedAt := time.Now()
@@ -215,5 +241,32 @@ func ProcessAnalyzeJob(ctx context.Context, payload []byte) error {
 	}
 
 	log.Printf("[Worker] Finished analysis job %s for: %s with status: %s", data.JobID, target, finalStatus)
+	return nil
+}
+
+// triggerFlowReport calls the Python flow service to generate an AI report for the job.
+func triggerFlowReport(ctx context.Context, baseURL, jobID, provider string) error {
+	body, _ := json.Marshal(map[string]string{
+		"job_id":   jobID,
+		"provider": provider,
+	})
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/report", bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("build request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, resp.Body)
+
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("flow service returned %d", resp.StatusCode)
+	}
+	log.Printf("[Worker] Flow service generated report for job %s", jobID)
 	return nil
 }

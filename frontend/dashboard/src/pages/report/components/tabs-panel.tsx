@@ -65,7 +65,7 @@ export function TabsPanel({ report, jobId }: TabsPanelProps) {
 
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto bg-background">
-        {activeTab === "reports" && <ReportsTab report={report} />}
+        {activeTab === "reports" && <ReportsTab report={report} jobId={jobId} />}
         {activeTab === "artifacts" && <ArtifactsTab jobId={jobId} />}
       </div>
     </div>

@@ -10,11 +10,11 @@ interface ArtifactsTabProps {
 
 const ARTIFACTS = [
   {
-    id: "report",
+    id: "report.md",
     name: "Full Report",
-    description: "Complete analysis report with all metrics and recommendations",
-    icon: FileJson,
-    type: "JSON",
+    description: "Complete analysis security and optimization report in Markdown",
+    icon: FileText,
+    type: "Markdown",
   },
   {
     id: "grype.json",

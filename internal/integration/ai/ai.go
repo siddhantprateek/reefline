@@ -163,7 +163,7 @@ func (c *Client) ValidateCredentials(ctx context.Context) (string, error) {
 		// POST /messages with a minimal request to check the key
 		payload := map[string]interface{}{
 			"model":      "claude-3-haiku-20240307",
-			"max_tokens": 1,
+			"max_tokens": 5,
 			"messages": []map[string]string{
 				{"role": "user", "content": "hi"},
 			},
