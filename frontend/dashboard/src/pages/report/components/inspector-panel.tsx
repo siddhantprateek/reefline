@@ -94,7 +94,7 @@ export function InspectorPanel({ report, grype, dive, dockle }: InspectorPanelPr
             {(Object.keys(SEVERITY_CONFIG) as Array<keyof typeof SEVERITY_CONFIG>).map((sev) => (
               <div
                 key={sev}
-                className="flex flex-col items-center p-3 border rounded-lg bg-muted/20"
+                className="flex flex-col items-center p-3 border bg-muted/20"
               >
                 <span className={`text-2xl font-bold ${SEVERITY_CONFIG[sev].textColor}`}>
                   {severityCounts[sev] ?? 0}
