@@ -187,20 +187,18 @@ func (h *JobsHandler) Delete(c *fiber.Ctx) error {
 		})
 	}
 
-	// Delete artifacts from MinIO
+	// Delete all artifacts under this job's prefix in MinIO
 	bucket := getEnv("MINIO_DEFAULT_BUCKET", "reefline")
-	artifacts := []string{
-		fmt.Sprintf("%s/report.md", jobID),
-		fmt.Sprintf("%s/draft.md", jobID),
-		fmt.Sprintf("%s/dockerfile", jobID),
-		fmt.Sprintf("%s/grype.json", jobID),
-		fmt.Sprintf("%s/dockle.json", jobID),
-		fmt.Sprintf("%s/dive.json", jobID),
-	}
+	prefix := fmt.Sprintf("%s/", jobID)
 
-	for _, artifact := range artifacts {
-		// Ignore errors if artifact doesn't exist
-		_ = storage.DeleteFile(ctx, bucket, artifact)
+	objects, err := storage.ListFiles(ctx, bucket, prefix)
+	if err != nil {
+		// Log but don't fail the delete — the DB record should still be removed
+		fmt.Printf("[Delete] warning: failed to list artifacts for job %s: %v\n", jobID, err)
+	} else {
+		for _, obj := range objects {
+			_ = storage.DeleteFile(ctx, bucket, obj.Key)
+		}
 	}
 
 	// Delete job record from database (soft delete)

@@ -1,7 +1,9 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 
-from agents import set_tracing_disabled
+from agents import set_tracing_disabled, set_tracing_export_api_key
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
@@ -9,10 +11,20 @@ from flow import run_flow
 from integration.db import get_ai_credentials, get_job
 from provider import ProviderConfig
 
+# Load environment variables from .env file
+load_dotenv()
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-# Tracing requires OPENAI_API_KEY for export — disable since we use custom providers
-set_tracing_disabled(True)
+# Enable tracing if an OpenAI API key is available for export;
+# non-OpenAI providers can still trace via the OpenAI Traces dashboard.
+_tracing_key = os.getenv("OPENAI_API_KEY", "")
+if _tracing_key:
+    set_tracing_export_api_key(_tracing_key)
+    logging.info("Tracing enabled — exporting to OpenAI Traces dashboard")
+else:
+    set_tracing_disabled(True)
+    logging.info("Tracing disabled — set OPENAI_API_KEY to enable")
 
 
 @asynccontextmanager
