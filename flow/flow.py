@@ -157,15 +157,15 @@ Output (10 lines max):
     supervisor.handoffs = [handoff(critique)]
     critique.handoffs = [handoff(supervisor)]
 
-    log.info("[Flow] Starting flow for job=%s provider=%s model=%s", job_id, cfg.provider, cfg.model_id)
+    log.info("Starting flow for job=%s provider=%s model=%s", job_id, cfg.provider, cfg.model_id)
 
     result = await Runner.run(
         supervisor,
         "Fetch all available scan data, analyze the results, and produce a complete Image Security Report as draft.md.",
-        max_turns=100,
+        max_turns=1000,
     )
 
-    log.info("[Flow] Flow complete, last_agent=%s job=%s", result.last_agent.name, job_id)
+    log.info("Flow complete, last_agent=%s job=%s", result.last_agent.name, job_id)
 
     # Critique publishes report.md on APPROVE; return its final output
     return result.final_output
