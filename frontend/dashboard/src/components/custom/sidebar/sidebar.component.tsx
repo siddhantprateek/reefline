@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { Home, Settings, Moon, Sun, Monitor, ChevronLeft, ChevronRight, Palette, Scan, Sparkles, Container, History, LogOut, User, BarChart3 } from "lucide-react"
+import { Home, Settings, Moon, Sun, Monitor, ChevronLeft, ChevronRight, Palette, Unplug, History, LogOut, User, BarChart3 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -26,14 +26,14 @@ export function Sidebar({ isCollapsed = false, toggleSidebar }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed top-14 left-0 hidden h-[calc(100vh-3.5rem)] border-r bg-background font-medium md:block transition-all duration-300",
+        "fixed top-14 left-0 hidden h-[calc(100vh-3.5rem)] border-r bg-background font-medium md:block transition-all duration-300 z-30",
         isCollapsed ? "w-16" : "w-60"
       )}
     >
       {/* Toggle Button */}
       <Button
         size="icon"
-        className="absolute -right-3 top-6 z-50 h-6 w-6 rounded-full border bg-background text-foreground cursor-pointer hover:bg-muted"
+        className="absolute -right-3 top-6 h-6 w-6 rounded-full border bg-background text-foreground cursor-pointer hover:bg-muted"
         onClick={toggleSidebar}
       >
         {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
@@ -61,20 +61,8 @@ export function Sidebar({ isCollapsed = false, toggleSidebar }: SidebarProps) {
             </Link>
           </Button>
           <Button variant="ghost" className={cn("justify-start gap-3", isCollapsed && "justify-center px-2")} asChild>
-            <Link to="/analysis">
-              <Scan className="h-5 w-5 shrink-0" />
-              {!isCollapsed && <span>Analysis</span>}
-            </Link>
-          </Button>
-          <Button variant="ghost" className={cn("justify-start gap-3", isCollapsed && "justify-center px-2")} asChild>
-            <Link to="/optimization">
-              <Sparkles className="h-5 w-5 shrink-0" />
-              {!isCollapsed && <span>Optimization</span>}
-            </Link>
-          </Button>
-          <Button variant="ghost" className={cn("justify-start gap-3", isCollapsed && "justify-center px-2")} asChild>
             <Link to="/integrations">
-              <Container className="h-5 w-5 shrink-0" />
+              <Unplug className="h-5 w-5 shrink-0" />
               {!isCollapsed && <span>Integrations</span>}
             </Link>
           </Button>

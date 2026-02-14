@@ -1,10 +1,14 @@
 package handlers
 
 import (
+	"fmt"
+	"io"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/siddhantprateek/reefline/pkg/storage"
 )
 
-// ReportHandler handles downloading report artifacts from MinIO/S3
+// ReportHandler handles downloading report artifacts from MinIO
 type ReportHandler struct{}
 
 // NewReportHandler creates a new ReportHandler instance
@@ -12,63 +16,48 @@ func NewReportHandler() *ReportHandler {
 	return &ReportHandler{}
 }
 
-// DownloadReport returns the full analysis report JSON for a completed job.
-//
+func (h *ReportHandler) streamArtifact(c *fiber.Ctx, objectName, filename, contentType string) error {
+	bucket := storage.GetConfigFromEnv().DefaultBucket
+	object, err := storage.DownloadFile(c.Context(), bucket, objectName)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": fmt.Sprintf("artifact not found: %s", objectName),
+		})
+	}
+	defer object.Close()
+
+	c.Set("Content-Type", contentType)
+	if c.Query("download") == "true" {
+		c.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	}
+	_, err = io.Copy(c.Response().BodyWriter(), object)
+	return err
+}
+
+// DownloadReport returns the full analysis report JSON.
 // GET /api/v1/jobs/:id/report
-// Response: Full report JSON with measured data, proposed optimizations, and tool data.
 func (h *ReportHandler) DownloadReport(c *fiber.Ctx) error {
-	// TODO: Extract job ID from params
-	// TODO: Verify job belongs to authenticated user and is completed
-	// TODO: Fetch report.json from MinIO/S3
-	// TODO: Return report JSON
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"message": "download report endpoint not yet implemented",
-	})
+	jobID := c.Params("id")
+	return h.streamArtifact(c, fmt.Sprintf("%s/report.json", jobID), "report.json", "application/json")
 }
 
-// DownloadDockerfile returns the AI-proposed optimized Dockerfile.
-//
-// GET /api/v1/jobs/:id/dockerfile
-// Response: Plain text Dockerfile content with Content-Type: text/plain
-func (h *ReportHandler) DownloadDockerfile(c *fiber.Ctx) error {
-	// TODO: Extract job ID from params
-	// TODO: Verify job belongs to authenticated user and is completed
-	// TODO: Fetch optimized.Dockerfile from MinIO/S3
-	// TODO: Return Dockerfile content as text/plain
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"message": "download dockerfile endpoint not yet implemented",
-	})
+// DownloadGrype returns the Grype vulnerability scan result.
+// GET /api/v1/jobs/:id/grype.json
+func (h *ReportHandler) DownloadGrype(c *fiber.Ctx) error {
+	jobID := c.Params("id")
+	return h.streamArtifact(c, fmt.Sprintf("%s/artifacts/grype.json", jobID), "grype.json", "application/json")
 }
 
-// DownloadSBOM returns the Software Bill of Materials (SBOM) in SPDX format.
-// Only available if the job included an image reference (scenario B or C).
-//
-// GET /api/v1/jobs/:id/sbom
-// Response: SBOM JSON (SPDX format)
-func (h *ReportHandler) DownloadSBOM(c *fiber.Ctx) error {
-	// TODO: Extract job ID from params
-	// TODO: Verify job belongs to authenticated user and is completed
-	// TODO: Fetch sbom.spdx.json from MinIO/S3
-	// TODO: Return 404 if job was Dockerfile-only (no SBOM generated)
-	// TODO: Return SBOM JSON
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"message": "download sbom endpoint not yet implemented",
-	})
+// DownloadDive returns the Dive layer efficiency analysis result.
+// GET /api/v1/jobs/:id/dive.json
+func (h *ReportHandler) DownloadDive(c *fiber.Ctx) error {
+	jobID := c.Params("id")
+	return h.streamArtifact(c, fmt.Sprintf("%s/artifacts/dive.json", jobID), "dive.json", "application/json")
 }
 
-// DownloadGraph returns the build graph SVG visualization.
-// Shows multi-stage build dependencies and COPY --from references.
-// Only available if the job included a Dockerfile (scenario A or C).
-//
-// GET /api/v1/jobs/:id/graph
-// Response: SVG image with Content-Type: image/svg+xml
-func (h *ReportHandler) DownloadGraph(c *fiber.Ctx) error {
-	// TODO: Extract job ID from params
-	// TODO: Verify job belongs to authenticated user and is completed
-	// TODO: Fetch graph.svg from MinIO/S3
-	// TODO: Return 404 if job was Image-only (no graph generated)
-	// TODO: Return SVG with correct Content-Type
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"message": "download graph endpoint not yet implemented",
-	})
+// DownloadDockle returns the Dockle CIS benchmark scan result.
+// GET /api/v1/jobs/:id/dockle.json
+func (h *ReportHandler) DownloadDockle(c *fiber.Ctx) error {
+	jobID := c.Params("id")
+	return h.streamArtifact(c, fmt.Sprintf("%s/artifacts/dockle.json", jobID), "dockle.json", "application/json")
 }

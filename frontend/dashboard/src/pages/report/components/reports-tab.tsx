@@ -1,157 +1,170 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Package, Shield, Zap, AlertTriangle, ChevronDown, ChevronRight, Layers } from "lucide-react";
-import { Inspector } from "./inspector";
-import { ImageInfoCard } from "./image-info-card";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { JobReport } from "@/api/jobs.api";
 
 interface ReportsTabProps {
   report: JobReport;
 }
 
-export function ReportsTab({ report }: ReportsTabProps) {
-  const [inspectorOpen, setInspectorOpen] = useState(false);
-  const measured = report.report?.measured;
+const SAMPLE_REPORT = `# Image Analysis Report
 
+## Summary
+
+This report provides a comprehensive security and optimization analysis of the container image.
+
+---
+
+## Vulnerability Overview
+
+| Severity | Count |
+|----------|-------|
+| Critical | 3     |
+| High     | 12    |
+| Medium   | 28    |
+| Low      | 47    |
+
+---
+
+## Key Findings
+
+### Security Issues
+
+- **Runs as root** — The container runs as the root user, which increases the blast radius of any compromise.
+- **Outdated base image** — The base image is over 90 days old. Consider updating to a recent release.
+- **Secrets detected** — 2 potential secrets were found in image layers.
+
+### Optimization Opportunities
+
+1. **Use a distroless or slim base image**
+   Switching from \`ubuntu:latest\` to \`gcr.io/distroless/static\` can reduce image size by ~60%.
+
+2. **Consolidate RUN instructions**
+   Multiple \`RUN apt-get install\` commands can be merged to reduce layer count and image size.
+
+3. **Remove build dependencies from final image**
+   Use multi-stage builds to exclude compilers and build tools from the production image.
+
+---
+
+## Recommendations
+
+\`\`\`dockerfile
+# Before
+FROM ubuntu:latest
+RUN apt-get update
+RUN apt-get install -y curl wget git
+RUN pip install -r requirements.txt
+
+# After (multi-stage)
+FROM python:3.12-slim AS builder
+RUN pip install --user -r requirements.txt
+
+FROM python:3.12-slim
+COPY --from=builder /root/.local /root/.local
+\`\`\`
+
+---
+
+## Score
+
+| Metric | Current | Estimated After |
+|--------|---------|----------------|
+| Security Score | 42 / 100 | 78 / 100 |
+| Image Size | 512 MB | 190 MB |
+| CVE Count | 90 | 15 |
+
+> **Note:** Estimates are based on automated analysis and may vary depending on implementation.
+`;
+
+export function ReportsTab({ report: _ }: ReportsTabProps) {
   return (
-    <div className="p-6 space-y-6">
-      {/* Inspector Toggle / Image Info */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Layers className="h-5 w-5" />
-            Image Inspector
-          </h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setInspectorOpen(!inspectorOpen)}
-          >
-            {inspectorOpen ? (
-              <>
-                <ChevronDown className="h-4 w-4 mr-2" />
-                Collapse
-              </>
+    <div className="p-6">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h1: ({ children }) => (
+            <h1 className="text-2xl font-bold mb-4 mt-2">{children}</h1>
+          ),
+          h2: ({ children }) => (
+            <h2 className="text-xl font-semibold mb-3 mt-6 border-b border-border pb-1">
+              {children}
+            </h2>
+          ),
+          h3: ({ children }) => (
+            <h3 className="text-base font-semibold mb-2 mt-4">{children}</h3>
+          ),
+          p: ({ children }) => (
+            <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{children}</p>
+          ),
+          ul: ({ children }) => (
+            <ul className="list-disc list-inside mb-3 space-y-1 text-sm text-muted-foreground">
+              {children}
+            </ul>
+          ),
+          ol: ({ children }) => (
+            <ol className="list-decimal list-inside mb-3 space-y-1 text-sm text-muted-foreground">
+              {children}
+            </ol>
+          ),
+          li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+          code: ({ children, className }) => {
+            const isBlock = className?.includes("language-");
+            return isBlock ? (
+              <code className="block bg-muted rounded-md p-4 text-xs font-mono overflow-x-auto whitespace-pre">
+                {children}
+              </code>
             ) : (
-              <>
-                <ChevronRight className="h-4 w-4 mr-2" />
-                Inspect Layers
-              </>
-            )}
-          </Button>
-        </div>
-
-        {inspectorOpen ? (
-          <Inspector report={report} />
-        ) : (
-          <ImageInfoCard report={report} />
-        )}
-      </div>
-
-      {/* Metrics Grid */}
-      {measured && (
-        <>
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Key Metrics</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Image Size</CardTitle>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {measured.current_size_mb ? `${measured.current_size_mb} MB` : "N/A"}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Current image size
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Vulnerabilities</CardTitle>
-                  <Shield className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{measured.total_cves || 0}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {measured.critical_cves || 0} critical, {measured.high_cves || 0} high
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Layer Efficiency</CardTitle>
-                  <Zap className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {measured.layer_efficiency_pct ? `${measured.layer_efficiency_pct}%` : "N/A"}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Storage optimization
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Packages</CardTitle>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{measured.total_packages || 0}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Installed packages
-                  </p>
-                </CardContent>
-              </Card>
+              <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">
+                {children}
+              </code>
+            );
+          },
+          pre: ({ children }) => (
+            <pre className="mb-4 rounded-md overflow-hidden">{children}</pre>
+          ),
+          blockquote: ({ children }) => (
+            <blockquote className="border-l-4 border-border pl-4 italic text-sm text-muted-foreground mb-3">
+              {children}
+            </blockquote>
+          ),
+          table: ({ children }) => (
+            <div className="overflow-x-auto mb-4">
+              <table className="w-full text-sm border-collapse border border-border">
+                {children}
+              </table>
             </div>
-          </div>
-
-          {/* Security Analysis */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Security Analysis</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Runs as root</span>
-                <Badge variant={measured.runs_as_root ? "destructive" : "outline"}>
-                  {measured.runs_as_root ? "Yes" : "No"}
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Secrets detected</span>
-                <Badge variant={measured.secrets_detected && measured.secrets_detected > 0 ? "destructive" : "outline"}>
-                  {measured.secrets_detected || 0}
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Base image age</span>
-                <span className="font-mono text-xs">
-                  {measured.base_image_age_days ? `${measured.base_image_age_days} days` : "N/A"}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Lint warnings</span>
-                <Badge variant="outline">{measured.lint_warnings || 0}</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Lint errors</span>
-                <Badge variant={measured.lint_errors && measured.lint_errors > 0 ? "destructive" : "outline"}>
-                  {measured.lint_errors || 0}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        </>
-      )}
+          ),
+          thead: ({ children }) => (
+            <thead className="bg-muted">{children}</thead>
+          ),
+          th: ({ children }) => (
+            <th className="border border-border px-3 py-2 text-left font-medium text-xs">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="border border-border px-3 py-2 text-xs text-muted-foreground">
+              {children}
+            </td>
+          ),
+          hr: () => <hr className="border-border my-4" />,
+          strong: ({ children }) => (
+            <strong className="font-semibold text-foreground">{children}</strong>
+          ),
+          a: ({ href, children }) => (
+            <a
+              href={href}
+              className="text-primary underline underline-offset-2 hover:opacity-80"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {children}
+            </a>
+          ),
+        }}
+      >
+        {SAMPLE_REPORT}
+      </ReactMarkdown>
     </div>
   );
 }

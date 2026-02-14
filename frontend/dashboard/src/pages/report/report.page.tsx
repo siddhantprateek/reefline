@@ -2,28 +2,43 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { getJob, type JobReport } from "@/api/jobs.api";
+import { getJob, getGrypeReport, getDiveReport, getDockleReport } from "@/api/jobs.api";
+import type { JobReport, GrypeReport, DiveReport, DockleReport } from "@/types/jobs";
 import {
   ReportHeader,
   ReportLayout,
-  PlanPanel,
+  InspectorPanel,
   TabsPanel,
 } from "./components";
 
 export function ReportPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const [report, setReport] = useState<JobReport | null>(null);
+  const [grype, setGrype] = useState<GrypeReport | null>(null);
+  const [dive, setDive] = useState<DiveReport | null>(null);
+  const [dockle, setDockle] = useState<DockleReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!jobId) return;
 
-    const fetchReport = async () => {
+    const fetchAll = async () => {
       try {
         setError(null);
         const data = await getJob(jobId);
         setReport(data);
+
+        if (data.status === "COMPLETED") {
+          const [grypeData, diveData, dockleData] = await Promise.allSettled([
+            getGrypeReport(jobId),
+            getDiveReport(jobId),
+            getDockleReport(jobId),
+          ]);
+          if (grypeData.status === "fulfilled") setGrype(grypeData.value);
+          if (diveData.status === "fulfilled") setDive(diveData.value);
+          if (dockleData.status === "fulfilled") setDockle(dockleData.value);
+        }
       } catch (err: any) {
         setError(err.message || "Failed to load report");
         console.error(err);
@@ -32,7 +47,7 @@ export function ReportPage() {
       }
     };
 
-    fetchReport();
+    fetchAll();
   }, [jobId]);
 
   if (loading) {
@@ -58,9 +73,6 @@ export function ReportPage() {
     );
   }
 
-  const proposed = report.report?.proposed;
-
-  // Show different UI based on job status
   if (report.status === "RUNNING" || report.status === "PENDING") {
     return (
       <div className="flex flex-col h-screen">
@@ -101,18 +113,11 @@ export function ReportPage() {
     );
   }
 
-  // Completed status - show full report
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      <ReportHeader jobId={jobId} status={report.status} imageRef={report.input_scenario} />
-
+    <div className="flex flex-col overflow-hidden">
+      <ReportHeader jobId={jobId} status={report.status} imageRef={report.input_scenario} scanTime={dockle?.scanTime} />
       <ReportLayout
-        left={
-          <PlanPanel
-            recommendations={proposed?.recommendations}
-            score={proposed?.score}
-          />
-        }
+        left={<InspectorPanel report={report} grype={grype} dive={dive} dockle={dockle} />}
         right={<TabsPanel report={report} jobId={jobId} />}
       />
     </div>

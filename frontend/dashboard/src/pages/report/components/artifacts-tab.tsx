@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, FileJson, FileCode, FileText, Image } from "lucide-react";
+import { Download, Eye, FileJson, FileText } from "lucide-react";
 
 const API_BASE = "/api/v1";
 
@@ -15,47 +15,40 @@ const ARTIFACTS = [
     description: "Complete analysis report with all metrics and recommendations",
     icon: FileJson,
     type: "JSON",
-    size: "~45 KB",
   },
   {
-    id: "dockerfile",
-    name: "Optimized Dockerfile",
-    description: "Generated Dockerfile with recommended optimizations applied",
-    icon: FileCode,
-    type: "Dockerfile",
-    size: "~2 KB",
+    id: "grype.json",
+    name: "Vulnerability Scan",
+    description: "Grype CVE scan results for all packages in the image",
+    icon: FileJson,
+    type: "JSON",
   },
   {
-    id: "sbom",
-    name: "Software Bill of Materials",
-    description: "SPDX-format SBOM listing all packages and dependencies",
+    id: "dive.json",
+    name: "Layer Efficiency",
+    description: "Dive analysis of image layers and wasted space",
     icon: FileText,
     type: "JSON",
-    size: "~120 KB",
   },
   {
-    id: "graph",
-    name: "Build Graph",
-    description: "Visual representation of the image build process",
-    icon: Image,
-    type: "SVG",
-    size: "~8 KB",
+    id: "dockle.json",
+    name: "CIS Benchmark",
+    description: "Dockle CIS Docker Benchmark compliance check results",
+    icon: FileText,
+    type: "JSON",
   },
 ];
 
 export function ArtifactsTab({ jobId }: ArtifactsTabProps) {
-  const handleDownload = (artifactId: string) => {
-    const url = `${API_BASE}/jobs/${jobId}/${artifactId}`;
-    window.open(url, "_blank");
-  };
+  const getUrl = (artifactId: string) => `${API_BASE}/jobs/${jobId}/${artifactId}`;
 
   return (
     <div className="p-6">
       <Card>
         <CardHeader>
-          <CardTitle>Download Artifacts</CardTitle>
+          <CardTitle>Artifacts</CardTitle>
           <CardDescription>
-            Access generated files and detailed analysis data
+            Preview or download generated analysis files
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -80,20 +73,26 @@ export function ArtifactsTab({ jobId }: ArtifactsTabProps) {
                     <p className="text-xs text-muted-foreground">
                       {artifact.description}
                     </p>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Size: {artifact.size}
-                    </div>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDownload(artifact.id)}
-                  className="ml-4"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download
-                </Button>
+                <div className="flex items-center gap-1.5 ml-4 shrink-0">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => window.open(getUrl(artifact.id), "_blank")}
+                    title="Preview"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => window.open(`${getUrl(artifact.id)}?download=true`, "_blank")}
+                    title="Download"
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             );
           })}

@@ -1,6 +1,4 @@
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DottedBackground } from "@/components/custom/header/dotted-background";
 import { cn } from "@/lib/utils";
@@ -20,35 +18,33 @@ interface ReportHeaderProps {
   jobId: string;
   status: JobStatus;
   imageRef?: string;
+  scanTime?: string;
 }
 
-export function ReportHeader({ jobId, status, imageRef }: ReportHeaderProps) {
-  const navigate = useNavigate();
+export function ReportHeader({ jobId, status, imageRef, scanTime }: ReportHeaderProps) {
   const statusConfig = STATUS_CONFIG[status] || STATUS_CONFIG.UNKNOWN;
   const StatusIcon = statusConfig.icon;
 
   return (
     <div className="border-b border-border bg-background/50 backdrop-blur-sm sticky top-0 z-10">
-      <DottedBackground className="px-6 py-5" y={6}>
-        <div className="flex items-center justify-between">
+      <DottedBackground className="px-6 py-2" y={6}>
+        <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/jobs")}
-              className="h-8 w-8"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
             <div>
-              <h1 className="text-2xl font-medium tracking-tight">Analysis Report</h1>
-              <p className="text-sm text-muted-foreground mt-1 font-mono">
+              <h1 className="text-2xl font-ligh tracking-tight">Report</h1>
+              <p className="text-sm text-muted-foreground font-mono">
                 {imageRef || jobId}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            {scanTime && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" />
+                <span>{new Date(scanTime).toLocaleString()}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <StatusIcon className={cn("h-5 w-5", statusConfig.color)} />
               <Badge

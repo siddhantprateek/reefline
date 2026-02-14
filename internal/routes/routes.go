@@ -57,14 +57,14 @@ func setupJobRoutes(api fiber.Router, q queue.Queue) {
 	// GET /api/v1/jobs/:id/stream     — SSE real-time progress
 	jobs.Get("/:id/stream", sseHandler.Stream)
 
-	// GET /api/v1/jobs/:id/report     — Download full report JSON
-	// GET /api/v1/jobs/:id/dockerfile — Download proposed optimized Dockerfile
-	// GET /api/v1/jobs/:id/sbom       — Download SBOM (SPDX format)
-	// GET /api/v1/jobs/:id/graph      — Download build graph SVG
+	// GET /api/v1/jobs/:id/report      — Download full report JSON
+	// GET /api/v1/jobs/:id/grype.json  — Grype vulnerability scan result
+	// GET /api/v1/jobs/:id/dive.json   — Dive layer efficiency analysis
+	// GET /api/v1/jobs/:id/dockle.json — Dockle CIS benchmark scan result
 	jobs.Get("/:id/report", reportHandler.DownloadReport)
-	jobs.Get("/:id/dockerfile", reportHandler.DownloadDockerfile)
-	jobs.Get("/:id/sbom", reportHandler.DownloadSBOM)
-	jobs.Get("/:id/graph", reportHandler.DownloadGraph)
+	jobs.Get("/:id/grype.json", reportHandler.DownloadGrype)
+	jobs.Get("/:id/dive.json", reportHandler.DownloadDive)
+	jobs.Get("/:id/dockle.json", reportHandler.DownloadDockle)
 }
 
 // setupCompareRoutes configures the comparison endpoint

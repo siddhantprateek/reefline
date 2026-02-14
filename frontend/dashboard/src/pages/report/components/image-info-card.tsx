@@ -1,45 +1,49 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Container, Layers, Calendar, Cpu } from "lucide-react";
-import type { JobReport } from "@/api/jobs.api";
+import { Container, Layers, HardDrive, Activity } from "lucide-react";
+import type { JobReport, DiveReport } from "@/types/jobs";
 
 interface ImageInfoCardProps {
   report: JobReport;
+  dive?: DiveReport | null;
 }
 
-export function ImageInfoCard({ report }: ImageInfoCardProps) {
-  // Mock metadata - in production this would come from Skopeo inspection
-  const metadata = {
-    name: report.input_scenario === "image" ? "ubuntu" : "custom-image",
-    tag: "22.04",
-    architecture: "amd64",
-    os: "linux",
-    layers: 6,
-    created: "2024-01-15T10:30:00Z",
-    size: "40.36 MB",
-  };
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+}
+
+export function ImageInfoCard({ report, dive }: ImageInfoCardProps) {
+  const imageRef = dive?.image ?? report.input_scenario;
+  const layerCount = dive?.layers?.length ?? null;
+  const efficiency = dive ? `${(dive.efficiency * 100).toFixed(1)}%` : null;
+  const wastedBytes = dive ? formatBytes(dive.wastedBytes) : null;
+  const totalSize = dive ? formatBytes(dive.sizeBytes) : null;
 
   const infoItems = [
     {
       icon: Container,
       label: "Image",
-      value: `${metadata.name}:${metadata.tag}`,
+      value: imageRef,
     },
-    {
+    ...(layerCount !== null ? [{
       icon: Layers,
       label: "Layers",
-      value: metadata.layers.toString(),
-    },
-    {
-      icon: Cpu,
-      label: "Platform",
-      value: `${metadata.os}/${metadata.architecture}`,
-    },
-    {
-      icon: Calendar,
-      label: "Created",
-      value: new Date(metadata.created).toLocaleDateString(),
-    },
+      value: `${layerCount} layers`,
+    }] : []),
+    ...(efficiency ? [{
+      icon: Activity,
+      label: "Efficiency",
+      value: efficiency,
+    }] : []),
+    ...(wastedBytes ? [{
+      icon: HardDrive,
+      label: "Wasted",
+      value: wastedBytes,
+    }] : []),
   ];
 
   return (
@@ -66,12 +70,14 @@ export function ImageInfoCard({ report }: ImageInfoCardProps) {
           })}
         </div>
 
-        <div className="mt-4 pt-4 border-t flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Total Size</span>
-          <Badge variant="outline" className="font-mono">
-            {metadata.size}
-          </Badge>
-        </div>
+        {totalSize && (
+          <div className="mt-4 pt-4 border-t flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Total Size</span>
+            <Badge variant="outline" className="font-mono">
+              {totalSize}
+            </Badge>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

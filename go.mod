@@ -15,6 +15,7 @@ require (
 	github.com/hibiken/asynq v0.26.0
 	github.com/joho/godotenv v1.5.1
 	github.com/minio/minio-go/v7 v7.0.98
+	github.com/openai/openai-go/v3 v3.22.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/wagoodman/dive v0.13.1
 	go.opentelemetry.io/otel v1.40.0
@@ -312,6 +313,10 @@ require (
 	github.com/sylabs/squashfs v1.0.6 // indirect
 	github.com/tchap/go-patricia/v2 v2.3.3 // indirect
 	github.com/therootcompany/xz v1.0.1 // indirect
+	github.com/tidwall/gjson v1.18.0 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.1 // indirect
+	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/tinylib/msgp v1.6.1 // indirect
 	github.com/toqueteos/webbrowser v1.2.0 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
