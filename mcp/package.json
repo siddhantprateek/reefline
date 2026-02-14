@@ -1,0 +1,23 @@
+{
+  "name": "reefline-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for the Reefline container image security platform",
+  "main": "build/index.js",
+  "type": "module",
+  "bin": {
+    "reefline-mcp": "build/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node build/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.13.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0"
+  }
+}
