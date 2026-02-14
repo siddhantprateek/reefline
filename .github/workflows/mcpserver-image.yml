@@ -7,6 +7,11 @@ on:
     paths:
       - "mcp/**"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag (e.g. v1.0.0)"
+        required: true
+        type: string
 
 jobs:
   build-and-push:
@@ -29,7 +34,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: siddhantprateek/reefline:mcp-v0.1
+          images: siddhantprateek/reefline
           tags: |
             type=sha,prefix=sha-,format=short
             type=raw,value=latest,enable={{is_default_branch}}
