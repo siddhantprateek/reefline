@@ -214,10 +214,12 @@ Integration credentials (GitHub tokens, Docker Hub passwords, Harbor tokens) are
 
 **MinIO Storage Structure:**
 Analysis results are stored in MinIO with the following structure:
-- `{bucket}/{job_id}/report.json` - Full analysis report
+- `{bucket}/{job_id}/report.md` - Full analysis report
+- `{bucket}/{job_id}/draft.md` - Draft analysis report
 - `{bucket}/{job_id}/dockerfile` - Optimized Dockerfile
-- `{bucket}/{job_id}/sbom.json` - Software Bill of Materials
-- `{bucket}/{job_id}/graph.svg` - Build graph visualization
+- `{bucket}/{job_id}/grype.json` - Grype analysis results
+- `{bucket}/{job_id}/dockle.json` - Dockle analysis results
+- `{bucket}/{job_id}/dive.json` - Dive analysis results
 
 ## API Structure
 

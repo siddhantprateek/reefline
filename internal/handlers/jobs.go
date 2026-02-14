@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -119,12 +118,11 @@ func (h *JobsHandler) List(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
-// JobReportResponse represents the full job report response
+// JobReportResponse represents the job status response
 type JobReportResponse struct {
-	JobID         string                 `json:"job_id"`
-	Status        string                 `json:"status"`
-	InputScenario string                 `json:"input_scenario"`
-	Report        map[string]interface{} `json:"report,omitempty"`
+	JobID         string `json:"job_id"`
+	Status        string `json:"status"`
+	InputScenario string `json:"input_scenario"`
 }
 
 // Get returns the status and report for a specific job.
@@ -162,29 +160,6 @@ func (h *JobsHandler) Get(c *fiber.Ctx) error {
 		InputScenario: job.Scenario,
 	}
 
-	// If job is completed, fetch the report from MinIO
-	if job.Status == models.JobStatusCompleted {
-		bucket := getEnv("MINIO_DEFAULT_BUCKET", "reefline")
-		reportPath := fmt.Sprintf("%s/report.json", jobID)
-
-		// Try to download the report
-		reportObj, err := storage.DownloadFile(ctx, bucket, reportPath)
-		if err != nil {
-			// Report might not exist yet, return job status without report
-			return c.Status(fiber.StatusOK).JSON(response)
-		}
-		defer reportObj.Close()
-
-		// Parse the report JSON
-		var reportData map[string]interface{}
-		if err := json.NewDecoder(reportObj).Decode(&reportData); err != nil {
-			// Failed to parse report, return without it
-			return c.Status(fiber.StatusOK).JSON(response)
-		}
-
-		response.Report = reportData
-	}
-
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
@@ -215,10 +190,12 @@ func (h *JobsHandler) Delete(c *fiber.Ctx) error {
 	// Delete artifacts from MinIO
 	bucket := getEnv("MINIO_DEFAULT_BUCKET", "reefline")
 	artifacts := []string{
-		fmt.Sprintf("%s/report.json", jobID),
+		fmt.Sprintf("%s/report.md", jobID),
+		fmt.Sprintf("%s/draft.md", jobID),
 		fmt.Sprintf("%s/dockerfile", jobID),
-		fmt.Sprintf("%s/sbom.json", jobID),
-		fmt.Sprintf("%s/graph.svg", jobID),
+		fmt.Sprintf("%s/grype.json", jobID),
+		fmt.Sprintf("%s/dockle.json", jobID),
+		fmt.Sprintf("%s/dive.json", jobID),
 	}
 
 	for _, artifact := range artifacts {

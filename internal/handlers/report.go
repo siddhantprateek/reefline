@@ -34,13 +34,6 @@ func (h *ReportHandler) streamArtifact(c *fiber.Ctx, objectName, filename, conte
 	return err
 }
 
-// DownloadReport returns the full analysis report JSON.
-// GET /api/v1/jobs/:id/report
-func (h *ReportHandler) DownloadReport(c *fiber.Ctx) error {
-	jobID := c.Params("id")
-	return h.streamArtifact(c, fmt.Sprintf("%s/report.json", jobID), "report.json", "application/json")
-}
-
 // DownloadGrype returns the Grype vulnerability scan result.
 // GET /api/v1/jobs/:id/grype.json
 func (h *ReportHandler) DownloadGrype(c *fiber.Ctx) error {
@@ -60,4 +53,18 @@ func (h *ReportHandler) DownloadDive(c *fiber.Ctx) error {
 func (h *ReportHandler) DownloadDockle(c *fiber.Ctx) error {
 	jobID := c.Params("id")
 	return h.streamArtifact(c, fmt.Sprintf("%s/artifacts/dockle.json", jobID), "dockle.json", "application/json")
+}
+
+// DownloadReportMD returns the final AI-generated report as Markdown.
+// GET /api/v1/jobs/:id/report.md
+func (h *ReportHandler) DownloadReportMD(c *fiber.Ctx) error {
+	jobID := c.Params("id")
+	return h.streamArtifact(c, fmt.Sprintf("%s/artifacts/report.md", jobID), "report.md", "text/markdown; charset=utf-8")
+}
+
+// DownloadDraftMD returns the supervisor's first-pass draft as Markdown.
+// GET /api/v1/jobs/:id/draft.md
+func (h *ReportHandler) DownloadDraftMD(c *fiber.Ctx) error {
+	jobID := c.Params("id")
+	return h.streamArtifact(c, fmt.Sprintf("%s/artifacts/draft.md", jobID), "draft.md", "text/markdown; charset=utf-8")
 }
