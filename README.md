@@ -10,6 +10,8 @@ As more AI-generated code hits open source, managing application security is lik
 
 <video src="https://github.com/user-attachments/assets/reef.mp4" controls autoplay loop muted width="100%"></video>
 
+> For a higher quality version, watch on [YouTube](https://www.youtube.com/watch?v=rQRcPPCOZ_w).
+
 ### ___Hackathon Submission___
 
 > _For details about the tools and technologies used in this project, see [SUBMISSION.md](SUBMISSION.md)._
@@ -88,10 +90,11 @@ bun run start
 ### Security
 - All integration credentials (GitHub tokens, Docker Hub passwords, Harbor tokens) encrypted at rest using **AES-256-GCM** before storing in PostgreSQL.
 
----
 
 
 ## Getting Started
+
+![](./assets/reefline.png)
 
 ### Prerequisites
 

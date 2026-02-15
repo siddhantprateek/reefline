@@ -4,6 +4,10 @@
 
 ![](./assets/reefline.png)
 
+## Demo
+
+> Watch the full demo on [YouTube](https://www.youtube.com/watch?v=rQRcPPCOZ_w).
+
 ## Tools & Technologies Used
 
 ### Frontend Development
@@ -35,24 +39,70 @@
 
 ## Architecture
 
-Reefline uses a **server-worker separation** pattern:
+Reefline uses a **server-worker separation** pattern across five core components:
+
+![Reefline Architecture](assets/reefline-arch.png)
+
+### Components
+
+#### 1. UI (Dashboard)
+The dashboard is where users manage container images and registries, trigger analysis jobs, view generated security reports, and escalate findings to their team. It provides real-time job progress via SSE, deep layer inspection, vulnerability browsing, and artifact downloads.
+
+#### 2. API Server
+The HTTP API server (Fiber/Go) handles all client requests — job submission, status queries, integrations, and artifact retrieval. It enqueues scan jobs to Redis (Asynq) and returns immediately, keeping the API responsive regardless of scan duration.
+
+**Why PostgreSQL?**
+Scan jobs and their results are structured, relational data with predictable access patterns — PostgreSQL's ACID guarantees and rich query support are a natural fit. Since analysis data doesn't require horizontal database scaling, a single reliable Postgres instance is simpler and more operationally sound than a distributed store.
+
+#### 3. Worker
+Pulling an image, generating an SBOM, running vulnerability scans, and inspecting every layer is a time-intensive process — asynchronous job processing is the right approach. Three options were considered:
+
+- **In-process** — blocks the API server, poor isolation
+- **Separate worker process** — independent scaling, clean separation (current approach)
+- **Fully containerized/isolated environment** — each job runs in its own container for maximum isolation
+
+The worker process was chosen as the pragmatic starting point. As the infrastructure grows, the natural evolution is full container-level isolation per job — giving complete resource boundaries and eliminating any cross-job interference.
+
+#### 4. Flow (AI Report Generation)
+Flow is a Python service responsible for AI-powered report generation. Once the worker has collected all scan evidence (Grype, Dockle, Dive outputs), it calls Flow to synthesize a final security report using a Supervisor + Critique agent pattern.
+
+Python was chosen here due to a real constraint: Go's LLM framework ecosystem is immature. An attempt was made to use [cloudwego/eino](https://github.com/cloudwego/eino), but LLMs consistently struggled to implement the agent flow correctly from its examples — the generated code was technically functional in isolation but became unmaintainable quickly. Since most AI frameworks (LangChain, LangGraph, etc.) are Python-first with mature tooling and documentation, switching to Python for this component was the practical call. It would have been one fewer architectural component, but reliability mattered more.
+
+**Archestra AI Integration**
+
+Flow proxies all LLM calls through Archestra, which acts as the LLM Proxy, MCP Registry, and Tool Policy layer:
+
+```python
+PROVIDER_BASE_URLS: dict[str, str] = {
+    "openai":     "http://localhost:9004/v1/openai/84ea7ec8-1640-44c7-95b3-83aa331104dd",
+    "anthropic":  "https://api.anthropic.com/v1",
+    "google":     "https://generativelanguage.googleapis.com/v1beta/openai",
+    "openrouter": "https://openrouter.ai/api/v1",
+}
+```
+
+Setting the `openai` base URL to the Archestra proxy endpoint routes all LLM traffic through Archestra, where Tool Policies, access control, logs/traces, and cost monitoring are centrally managed.
+
+Supported LLM providers: **OpenAI**, **Anthropic**, **Google Gemini**, **OpenRouter**
+
+#### 5. Reefline MCP Server
+Reefline exposes an MCP server that runs in both `stdio` and HTTP modes. This allows AI applications — Claude Code, Cursor, Archestra Chat UI — to interact directly with Reefline: create scan jobs, query results, analyze reports, and more, all through natural language.
+
+**Supported integrations:**
+- Container Registries: Kubernetes (in-cluster), Docker, Harbor, GHCR
+- LLM Providers: OpenAI, Anthropic, OpenRouter, Google Gemini
+
+#### MinIO Object Storage
+All scan artifacts are stored in MinIO (S3-compatible). Each job gets its own prefix:
 
 ```
-Client → HTTP Server (Fiber) → Redis Queue (Asynq)
-                                      ↓
-                               Worker Process
-                          ┌────────────────────┐
-                          │  Grype (CVE scan)  │
-                          │  Dockle (CIS bench)│
-                          │  Dive (layers)     │
-                          │  Flow (AI report)  │
-                          └────────────────────┘
-                                      ↓
-                              MinIO (artifacts)
-                              PostgreSQL (state)
+{bucket}/{job_id}/
+├── grype.json      ← Vulnerability scan results
+├── dockle.json     ← CIS benchmark results
+├── dive.json       ← Layer efficiency analysis
+├── report.md       ← Final AI-generated report
+└── draft.md        ← Supervisor agent first-pass draft
 ```
-
-The server handles HTTP requests and enqueues jobs. The worker runs CPU/memory-intensive security scans independently — both can be scaled horizontally.
 
 ### Scanning Pipeline
 
@@ -117,37 +167,6 @@ GET /metrics/tools    → Per-tool performance (avg duration, success rate)
 
 ## Environment Variables
 
-### Core
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `8080` | HTTP server port |
-| `ENVIRONMENT` | `development` | `development` or `production` |
-
-### Database
-| Variable | Default |
-|----------|---------|
-| `DB_HOST` | `localhost` |
-| `DB_PORT` | `5432` |
-| `DB_USER` | `reefline` |
-| `DB_PASSWORD` | `reefline` |
-| `DB_NAME` | `reefline` |
-| `DB_SSL_MODE` | `disable` |
-
-### MinIO
-| Variable | Default |
-|----------|---------|
-| `MINIO_ENDPOINT` | `localhost:9000` |
-| `MINIO_ACCESS_KEY` | `minioadmin` |
-| `MINIO_SECRET_KEY` | `minioadmin` |
-| `MINIO_USE_SSL` | `false` |
-| `MINIO_DEFAULT_BUCKET` | `reefline` |
-
-### Redis (optional — falls back to in-memory)
-| Variable | Default |
-|----------|---------|
-| `REDIS_HOST` | `localhost` |
-| `REDIS_PORT` | `6379` |
-| `REDIS_PASSWORD` | _(empty)_ |
 
 ### Security Tools (worker only)
 | Variable | Default | Description |
@@ -178,10 +197,6 @@ GET /metrics/tools    → Per-tool performance (avg duration, success rate)
 ## Archestra AI Integration
 
 Reefline uses [Archestra AI](https://archestra.ai) as its LLM Proxy, MCP Registry, and Tool Policy layer — keeping agent access locked down and observable.
-
-### Architecture
-
-![Reefline Architecture](assets/reefline-arch.png)
 
 ### Setting Up the MCP Server
 
@@ -237,6 +252,51 @@ Once registered and policies are configured, you can interact with Reefline via 
 ![Archestra Chat Interface](assets/ar-chat.png)
 
 ---
+
+## User Journey
+
+A user submits an image from the Reefline dashboard. Within 2–3 minutes, Reefline has:
+
+1. Pulled and inspected the image metadata (Skopeo/containers-image)
+2. Run a full vulnerability scan (Grype) — surfacing CVEs with severity, package, and fix version
+3. Checked CIS Docker Benchmark compliance (Dockle)
+4. Analyzed every layer for efficiency and wasted space (Dive)
+5. Generated an AI-authored security report with Dockerfile optimization suggestions (Flow)
+
+The report surfaces:
+- Vulnerability counts by severity (Critical / High / Medium / Low) with top CVEs
+- Layer-by-layer breakdown — which commands created each layer, file counts, and sizes
+- Risk assessments and actionable remediation steps
+
+![Layer Inspection](assets/layer-dive.png)
+
+Users can drill into individual layers to understand exactly what's in each one — command, size, file count — making it easy to identify bloated or unnecessary layers.
+
+Under the **Artifacts** tab, users can preview or download all raw evidence collected during the scan:
+
+![Artifacts](assets/artifacts.png)
+
+- **Full Report** (Markdown) — complete AI-generated security and optimization report
+- **Vulnerability Scan** (JSON) — raw Grype CVE results
+- **Layer Efficiency** (JSON) — Dive layer analysis
+- **CIS Benchmark** (JSON) — Dockle compliance results
+
+
+
+## Challenges
+
+**Go LLM ecosystem maturity**
+The biggest blocker was implementing the agent flow in Go. [cloudwego/eino](https://github.com/cloudwego/eino) was attempted as the framework, but LLMs could not reliably implement even straightforward examples from its documentation. The generated code would work in isolation but quickly became unrecognizable as more pieces were added — violating basic software engineering principles around maintainability. The decision was made to drop the Go framework entirely and rewrite the AI component in Python, where LangGraph/LangChain have mature, battle-tested patterns. This added a component to the architecture but was the right trade-off for reliability.
+
+**Asynchronous scan pipeline**
+Coordinating progress reporting across four independent tools (Skopeo → Grype → Dockle → Dive → Flow) with meaningful percentage updates required careful orchestration. Each tool runs sequentially, with progress events streamed to the frontend via SSE so users get live feedback rather than a blank wait screen.
+
+**Encrypted credential storage**
+Integration credentials (GitHub tokens, Docker Hub passwords, Harbor tokens) needed to be stored securely. AES-256-GCM encryption was implemented in `pkg/crypto` so credentials are never stored in plaintext in PostgreSQL.
+
+**Worker isolation trade-offs**
+Separating the worker from the server was straightforward, but full per-job container isolation (the ideal end state) was descoped in favor of shipping a working product. The current worker process model works well at small scale; container isolation is the clear next step as the platform grows.
+
 
 ## Development Approach
 
