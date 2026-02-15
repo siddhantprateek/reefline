@@ -2,6 +2,8 @@
 
 > Container image hygiene and runtime security for modern Kubernetes infrastructure.
 
+![](./assets/reefline.png)
+
 ## Tools & Technologies Used
 
 ### Frontend Development
