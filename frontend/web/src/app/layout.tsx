@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { ThemeProvider } from "../components/theme-provider";
+import { Header } from "../components/header";
+import { Footer } from "../components/footer";
 import { dmSans, geistMono } from "./fonts";
 
 

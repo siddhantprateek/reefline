@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUpRight, Github } from "lucide-react";
-import { geistMono } from "@/app/fonts";
+import { geistMono } from "../app/fonts";
 import { motion } from "framer-motion";
 import { siGithub } from "simple-icons";
 

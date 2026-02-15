@@ -1,6 +1,6 @@
 "use client";
 
-import { geistMono } from "@/app/fonts";
+import { geistMono } from "../app/fonts";
 import { motion } from "framer-motion";
 import { ThemeSwitcher } from "./theme-switcher";
 import { siGithub } from "simple-icons";

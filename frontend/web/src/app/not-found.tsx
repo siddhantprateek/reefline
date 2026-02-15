@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
-import { geistMono } from "@/app/fonts";
+import { geistMono } from "./fonts";
 
 export default function NotFound() {
   return (
