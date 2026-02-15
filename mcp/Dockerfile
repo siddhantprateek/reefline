@@ -20,4 +20,9 @@ RUN npm ci --omit=dev
 
 COPY --from=builder /app/build ./build
 
-ENTRYPOINT ["node", "build/index.js"]
+EXPOSE 4000
+
+ENV MCP_TRANSPORT=http
+ENV MCP_PORT=4000
+
+ENTRYPOINT ["node", "build/index.js", "--http"]
