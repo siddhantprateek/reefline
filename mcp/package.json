@@ -10,7 +10,10 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "node build/index.js"
+    "start": "node build/index.js",
+    "start:stdio": "node build/index.js --stdio",
+    "start:http": "node build/index.js --http",
+    "start:http:port": "node build/index.js --http --port"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.13.0",
