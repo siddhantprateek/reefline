@@ -1,0 +1,341 @@
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[colorlinks = true,
+            linkcolor = red,
+            urlcolor  = blue,
+            citecolor = blue,
+            anchorcolor = blue]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{fontawesome5}
+\usepackage{multicol}
+\setlength{\multicolsep}{-3.0pt}
+\setlength{\columnsep}{-1pt}
+\input{glyphtounicode}
+
+
+%----------FONT OPTIONS----------
+% sans-serif
+% \usepackage[sfdefault]{FiraSans}
+% \usepackage[sfdefault]{roboto}
+% \usepackage[sfdefault]{noto-sans}
+% \usepackage[default]{sourcesanspro}
+
+% serif
+% \usepackage{CormorantGaramond}
+% \usepackage{charter}
+
+\hypersetup{pdfborder = 0 0 0}
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footer fields
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.6in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.19in}
+\addtolength{\topmargin}{-.7in}
+\addtolength{\textheight}{1.4in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+% Ensure that generate pdf is machine readable/ATS parsable
+\pdfgentounicode=1
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\classesList}[4]{
+    \item\small{
+        {#1 #2 #3 #4 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{1.0\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & \textbf{\small #2} \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{1.001\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & \textbf{\small #2}\\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+
+\renewcommand\labelitemi{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.0in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+
+
+\begin{document}
+
+\begin{center}
+    {\Huge \scshape Siddhant Prateek Mahanayak} \\ \vspace{1pt}
+    \small
+    \raisebox{-0.1\height}\faPhone\ (+91)7077-8176-28 ~
+    \href{mailto:siddhantprateek@gmail.com}{\faEnvelope\ siddhantprateek@gmail.com} ~ 
+    \href{https://linkedin.com/in/siddhantprateek}{\faLinkedin\ siddhantprateek}  ~
+    \href{https://github.com/siddhantprateek}{\faGithub\ siddhantprateek} ~
+    \href{https://siddhantprateek.xyz/}{siddhantprateek.xyz}
+    \vspace{-8pt}
+\end{center}
+
+
+% -----------Summary-----------
+% \section{Objective}
+%   \small{Enter your objective here}
+% \vspace{-12pt}
+% adjust vscape based on the space you want to leave between each section.
+
+
+
+
+%-----------Technical Skilss-----------
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0.1in, label={}]
+    \small{\item{
+     \textbf{Languages}{: Go, Javascript/Typescript, Python, Bash} \textbf{Databases}{: Postgres, Mongo, Firebase, DynamoDB, QdrantDB} \textbf{Cache}{: Redis}
+     \textbf{Frameworks}{: React, GoORM, Gin, Echo, GoFiber, ExpressJs, NestJs, Flask, FastApi} \textbf{Monitoring}{: LGTM Stack}
+     \textbf{DevOps Tools}{: Docker, Kubernetes, Helm, Nginx, AWS, Kafka, RabbitMQ, Github Actions, Jenkins, CI/CD, Tekton, Istio, ArgoCD, Karpenter} \textbf{Infrastructure}{: Terraform} \\
+     
+    }}
+ \end{itemize}
+ \vspace{-20pt}
+
+%-----------EXPERIENCE-----------
+\section{Experience}
+    \resumeSubHeadingListStart
+\resumeSubheading
+{Agentkube}{Dec 2024 -- Present}
+{Founder / CEO}{Remote, India}
+\resumeItemListStart
+  \resumeItem{It's an \textbf{AI-powered IDE for Kubernetes} that helps DevOps and Platform teams diagnose and resolve production issues \textbf{up to 80\% faster}. Teams rely on \textbf{10--15 fragmented cloud-native tools} across observability, cost monitoring, security, and CI/CD. During incidents, engineers lose critical time switching contexts, correlating logs, metrics, and traces, and escalating issues to a small number of senior operators.}
+
+  \resumeItem{ \textbf{Agentkube consolidates debugging, cost visibility, and security insights into a single desktop IDE}, with deep integrations across Kubernetes APIs, observability platforms such as \textbf{New Relic, Datadog, and the LGTM stack}, and cloud infrastructure. Using agent-driven root-cause analysis and \textbf{Model Context Protocols (MCP)}, Agentkube surfaces actionable insights directly from cluster telemetry, enabling faster incident resolution, improved cost efficiency, and earlier detection of security risks.}
+\resumeItemListEnd
+        
+        \resumeSubheading
+        {Elest.io}{July 2024 -- October 2024}
+        {DevOps Engineer}{Remote, Ireland}
+        \resumeItemListStart
+          \resumeItem{Integrated and maintained \textbf{15+ open-source applications} into Elest.io’s managed service catalog, ensuring production-grade deployments and long-term maintainability.}
+          \resumeItem{Worked as a \textbf{release engineer}, validating builds and managing version upgrades, reducing failed releases by \textbf{~35\%}.}
+          \resumeItem{Built, maintained, and monitored \textbf{CI/CD pipelines} for \textbf{20+ projects}, improving deployment consistency and reducing manual deployment effort by \textbf{~40\%}.}
+          \resumeItem{Resolved \textbf{customer-reported deployment \& runtime issues}, reducing mean time to resolution (MTTR) by \textbf{~30\%}.}
+          \resumeItem{Configured and optimized \textbf{Nginx reverse proxy} setups to ensure correct routing and exposure of applications, improving external access reliability.}
+          \resumeItem{Implemented and managed \textbf{wildcard SSL/TLS certificates} across multiple applications, eliminating certificate-related outages and reducing support tickets by \textbf{~25\%}.}
+          \resumeItem{Contributed fixes and configuration improvements to \textbf{open-source software}, improving deployment stability and reducing recurring incidents.}
+          \resumeItem{Worked extensively on \textbf{Hetzner Cloud}, ensuring stable provisioning, networking, and application reliability across \textbf{dozens of customer environments}.}
+        \resumeItemListEnd
+
+          
+      \resumeSubheading
+      {Cyclops (CNCF Project)}{May 2024 -- Aug 2024}
+      {Open Source Contributor}{Remote, IN}
+      \resumeItemListStart
+        \resumeItem{Top contributor to \textbf{Cyclops}, an \textbf{open-source Kubernetes operator and UI} that simplifies application deployment by replacing complex YAML workflows with validated, UI-driven configurations; later accepted as a \textbf{CNCF project}.}
+        \resumeItem{Implemented \textbf{authentication and authorization} by building the Cyclops login flow and integrating \textbf{Cerbos} for fine-grained \textbf{RBAC and policy enforcement}.}
+        \resumeItem{Contributed significantly to the \textbf{cyctl CLI}, improving developer workflows and usability for managing Cyclops resources.}
+        \resumeItem{Extended the Cyclops controller to support additional Kubernetes resources and \textbf{fixed reconciliation bugs}, improving operator stability and deployment reliability.}
+        \resumeItem{Authored multiple \textbf{approved and merged pull requests}, collaborating closely with maintainers and being recognized as a \textbf{top project contributor}.}
+      \resumeItemListEnd
+
+      \resumeSubheading
+      {Ai Planet}{March 2024 -- July 2024}
+      {MLOps / DevOps Engineer}{Remote, Belgium}
+      \resumeItemListStart
+        \resumeItem {Incorporated the Keda-http Addon for dynamic scaling based on HTTP traffic as a component of deployment worker.}
+        \resumeItem{Implemented a Kubernetes Job to adjust the ScaledObject and HTTPScaledObject for scaling down to zero during periods of low traffic.}
+        \resumeItem{Implemented Kubernetes Job to add triggers to Keda ScaledObject to scale based on Memory, Traffic, CPU Utilization and conducted load testing with K6 by incrementally scaling virtual users to assess system resilience through HTTP requests.}
+        \resumeItem {Worked on Cloud Migration using AWS Application Migration Service, AWS Data Migration Service}
+        \resumeItem{Implemented MinIO Object Storage setup for Kubernetes on an EKS Cluster, along with configuring several other Kubernetes operators such as New Relic, Kube-prometheus-operator, and Keda using charts.}
+        \resumeItem{Implemented budget notifications and optimized the utilization of infrastructure resources, leading to a \textbf{21\% reduction in infrastructure expenses}. This involved selecting appropriate instance types and volumes, resulting in \textbf{monthly savings of approximately \$400.}}
+        \resumeItem{Collaborated with the team lead to ensure the smooth migration and testing of Kubernetes clusters, instances, and databases, minimizing downtime.}
+        \resumeItem{Developed pipelines using ArgoCD and workflows with GitHub Actions, resulting in a \textbf{30\% reduction in deployment times} and increase in workflow efficiency.}
+        \resumeItem{Enabled \textbf{autoscaling with Prometheus monitoring and Keda} for incoming load in task queue, validated it through stress testing using Fortio. }
+        \resumeItem{Created Grafana dashboard to \textbf{visualize cluster logging aggregated by Loki and Prometheus Metrics} for the Tech team.}
+        \resumeItem{Developed Helm charts for application deployment processes, significantly reducing deployment time.}
+        \resumeItem{Implemented various deployment specifications to ensure high availability and resilience of the application, reducing downtime to 1.5 seconds. Incorporated distroless multi-stage builds to enhance application security and minimize the blast radius.}
+\resumeItemListEnd
+    
+%   \resumeSubHeadingListStart
+%       \resumeSubheading
+%       {TravelArrow}{May 2024 -- Jun 2024}
+%       {Full-Stack / DevOps Engineer • Contract}{Remote, IN}
+%       \resumeItemListStart
+%         \vspace{2ex}
+%         \resumeItem {Implemented and managed a robust self-hosted MongoDB replica set on Azure VM instances, ensuring high availability, data redundancy, and enhanced security through authentication and TLS/SSL encryption. }
+% %Based on the number of point you want to add add the "\resumeItem" for each point you want to add.
+%     \resumeItemListEnd
+\vspace{1ex}
+  \resumeSubHeadingListStart
+      \resumeSubheading      
+      {DivineChants}{December 2023 -- March 2024}
+      {Software Developer}{Remote, India}
+      \resumeItemListStart
+        \vspace{2ex}
+        \resumeItem {Designed a serverless music platform, ensuring optimal performance, scalability, and \textbf{monitoring using CloudWatch}.}
+        \resumeItem {Developed multi-cloud solution utilizing \textbf{MongoDB and S3/Cloud Storage} to efficiently manage and retrieve user data and music files.}
+        \resumeItem{Designed and Developed \textbf{responsive web-based components} using React.}
+        \resumeItem {Ensured secure and compliant operations of the AWS/GCP infrastructure resources by managing \textbf{Control Tower, IAM Identity Managers, and IAM Roles}}
+        \resumeItem {Created docker-compose configuration file to \textbf{orchestrate multi-container environments}, enabling efficient local debugging and testing of applications.}
+        \resumeItem{Led the development of over 100+ RESTful endpoints for the music platform, strictly adhering to the MVC API architectural pattern to improve application scalability and maintainability.}
+        \resumeItem{Implemented scripts to automate the scraping of music files and artists metadata, resulting in a seamless process that pushed acquired data into the database efficiently.}
+        \resumeItem{\textbf{Automated the deployment} of Jenkins server on AWS EC2 instances by creating a script,\textbf{ reducing manual work}.}
+        \resumeItem{Deployed MVP server on AWS EC2, utilizing Nginx as a \textbf{reverse proxy} to handle client requests, resulting in a \textbf{30\% improvement in performance}.}
+        \resumeItem{Deployed MongoDB Atlas with VPC peering into a new VPC using CloudFormation template and Resolved VPC configuration issues by integrating an Internet Gateway and VPC endpoint for connectivity to AWS services.}
+        \resumeItem{Implemented Prometheus metrics to \textbf{monitor CPU, memory, disk, network usage, uptime}, and \textbf{process metrics} for EC2 instances.}
+        \resumeItem{Built Grafana dashboard to visualize metrics for instances potentially\textbf{ reducing costs by 90\% over CloudWatch} through efficient resource allocation based on \textbf{real-time visualizations of system performance}.}
+%Based on the number of point you want to add add the "\resumeItem" for each point you want to add.
+        \vspace{2ex}
+    \resumeItemListEnd
+
+    \resumeSubheading
+      {The Linux Foundation}{July 2023 -- December 2023}
+      {LFX Mentee, Researcher}{Remote, Distributed}
+      \resumeItemListStart
+        \vspace{2ex}
+        \resumeItem {Architect scalable Go-based consensus protocol for HyperLedger Fabric, improving performance and reliability.}
+        \resumeItem {Benchmarked \textbf{various consensus protocols} such as \textbf{Raft, PBFT, mirBFT, BFT-Smart, and zyzzyva}}
+        \resumeItem{Developed automated testing environment for the consensus algorithm over \textbf{AWS EC2 instances using Terraform.}}
+        % \resumeItem{Implemented Jenkins CI pipeline to ensure consistent consensus protocol code coverage and reduce testing time by 10\%.}
+        \resumeItem{Conducting \textbf{thorough testing and assessment} of different protocols to extract key system requisites, enabling the creation of a new consensus protocol that \textbf{increased throughput by 30\% while ensuring data integrity}.}
+%Based on the number of point you want to add add the "\resumeItem" for each point you want to add.
+        \vspace{2ex}
+    \resumeItemListEnd
+      
+    \resumeSubheading
+      {Abblor Tech Pvt. Ltd.}{April 2023 -- July 2023}
+      {Full Stack Developer}{Remote, India}
+      \resumeItemListStart
+        \vspace{2ex}
+        \resumeItem {Responsible to \textbf{design a highly scalable system and database framework} for the \textbf{Login-as-a-Service} application, including the creation of a \textbf{sequence diagram to visualize} the system's interactions.}
+        \resumeItem{Led the implementation of application \textbf{microservices in Go}, resulting in a \textbf{30\% improvement in performance} and ensuring seamless \textbf{compatibility across platforms}. Utilized \textbf{gRPC for efficient internal network communication} between services and developed a prototype using Node.js and Firestore to \textbf{validate system scalability.}}
+        \resumeItem {Implemented an \textbf{optimized session snapshot management solution} using \textbf{in-memory caching}, resulting in a \textbf{75\% reduction in response time.}}
+        \resumeItem {Implemented \textbf{client-side caching} across websites using React, resulting in a \textbf{50\% reduction in loading time} and significantly enhancing user experience by \textbf{minimizing latency} and \textbf{network queries}.}
+        \resumeItem{Deployed Pi-Hole on \textbf{EC2 instance to intercept and block DNS-level ad-requests}, enhancing browsing speed and reducing user data consumption.}
+        \resumeItem{\textbf{Automated the deployment process} of a Node.js application server on Google Cloud Platform (GCP) by developing Bash scripts, streamlining the deployment process and \textbf{minimizing developer effort.}}
+        \resumeItem{\textbf{Designed API using Swagger} to document the entire workflow of the application, ensuring clear understanding of installation, deployment, and scripting procedures}
+        \vspace{2ex}
+    \resumeItemListEnd
+    
+  \resumeSubHeadingListEnd
+\vspace{-16pt}
+% adjust vscape based on the space you want to leave between each section.
+
+%-----------EDUCATION-----------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Kalinga Institute of Industrial Technology, Bhubaneswar, IN}{Sept 2020 -- Sept 2024}
+      {Bachelors of Technology in Computer Science and Engineering}{CGPA: 9.0/10.0}
+      %leave a line after this
+  \resumeSubHeadingListEnd
+\vspace{-18pt}
+
+%-----------PROJECTS-----------
+\section{Projects}
+    \vspace{-6pt}
+    \resumeSubHeadingListStart
+    \resumeProjectHeading
+          {\textbf{Landate} $|$ \emph{Go, Microservices, Prometheus, Grafana, RabbitMQ, Kubernetes, Docker, Consul, AWS, React ...\href{https://github.com/The-Origin-Labs/Landate}{Git}}}{}
+          \resumeItemListStart
+            \vspace{2ex}
+            \resumeItem{Developed and implemented a highly efficient and scalable Go application on Securing Property Rights using Polygon Proof of Stake, resulting in a\textbf{ 50\% increase in transaction speed} and a \textbf{75\% reduction in overall system downtime}.}
+            \resumeItem{Implemented \textbf{RabbitMQ as the message-broker} for \textbf{reliable message exchange} between services, leading to a\textbf{ 90\% decrease in data loss} during communication between different components of the system. Utilized Consul for \textbf{service discovery and health-check}, resulting in a \textbf{60\% improvement in service availability} and \textbf{reducing response time by 40\%}.}
+            \vspace{2ex}
+          \resumeItemListEnd
+          \vspace{-14pt}
+    \resumeProjectHeading
+          {\textbf{Qdrant} $|$ \emph{QdrantDB, AWS, Terraform, Github Actions, Go, Kafka, Prometheus, Grafana, Kubernetes \href{https://github.com/siddhantprateek/qdrant}{Git}}}{}
+          \resumeItemListStart
+            \vspace{2ex}
+            \resumeItem{Built a scalable application in Go using QdrantDB vector database, and deployed it on \textbf{AWS EC2 Ubuntu Instance}. Used \textbf{Kubernetes CronJobs} and \textbf{StatefulSet} for the \textbf{automated snapshots}, \textbf{recovery mechanism} making the \textbf{application persistan}t and Utilized \textbf{Terraform for resource provisioning.}}
+            \resumeItem{Ensured \textbf{efficient 1-million-record ingestion} by creating \textbf{data pipeline using Kafka}, used Prometheus and Grafana for the \textbf{performance observability, visualizing and
+application monitoring} the running deployments in the K8s Cluster.}
+          \resumeItemListEnd
+          \vspace{-3pt}
+    % \resumeProjectHeading
+    %       {\textbf{Go-GPT} $|$ \emph{Go, Cobra, Bash, OpenAI, Docker \href{https://github.com/siddhantprateek/go-gpt}{Git}}}{}
+    %       \resumeItemListStart
+    %         \resumeItem{ It is an \textbf{open-source CLI Tool} that comprises an implementation of the \textbf{GPT-3 language model} in Go. Resulting in a \textbf{30\% reduction in time spent} on Web. Improved the performance of the CLI tool by optimizing code execution, resulting in a \textbf{20\% faster response time for user queries}.}
+    %       \resumeItemListEnd
+    %       \vspace{-14pt}
+    % \resumeSubHeadingListEnd
+\vspace{-1pt}
+
+% -------- Certification -----------
+% \section{Certification}
+%   \resumeSubHeadingListStart
+%     \resumeSubheading
+%       {CKA Certified Kubernetes Adminstrator {\href{https://example.com}{credential.}}  \& CKAD  {\href{https://example.com}{credential}.}}{Oct 2023 -- Sept 2026}
+%       {}{}
+%       %leave a line after this
+      
+%   \resumeSubHeadingListEnd
+% \vspace{-18pt}
+
+%------------Publications-----------
+% \section{Certification}
+% \vspace{-6pt}
+%     \resumeSubHeadingListStart
+%     \resumeProjectHeading
+%     {\textbf{The Title of your paper} $|$ \emph{\href{https://www.researchgate.net}{Publication link}}}{Month Year}
+%     \resumeItemListStart
+%             \resumeItem{Write about your paper.}
+%             \resumeItem{Write about your paper.}
+%           \resumeItemListEnd
+%     \resumeSubHeadingListEnd
+% \vspace{-16pt}
+% adjust vscape based on the space you want to leave between each section.
+
+%-----------PROGRAMMING SKILLS-----------
+% \section{Certifications}
+% \textbf{Certificate 1}{: Title} \\
+% \textbf{Certificate 2} {: Title}
+
+
+
+\end{document}
