@@ -1,158 +1,41 @@
-# Siddhant Prateek Mahanayak - Portfolio
+# Reefline
 
-I'm a Platform Engineer and Founder building the future of DevOps tooling. I specialize in Kubernetes, AI-powered infrastructure, and scalable cloud architectures.
+> Container image hygiene and runtime security for modern Kubernetes.
 
-## Current Focus
-- **Founder & CEO at Agentkube** - Building the world's first AI-powered Kubernetes IDE
-- **Platform Engineering** - Designing resilient, scalable infrastructure solutions
-- **Developer Tooling** - Creating tools that make complex systems simple
+GitHub: https://github.com/siddhantprateek/reefline
 
-## Key Projects & Experience
+Reefline gives security teams a simple, powerful way to scan container images for vulnerabilities, benchmark compliance, and layer inefficiencies — with AI-generated reports and an MCP server for agent-native access.
 
-### Agentkube (Founder / CEO - Dec 2024 - Present)
-It’s an AI-powered IDE for Kubernetes that helps DevOps and Platform teams diagnose and resolve production issues up to 80% faster. Teams rely on 10–15 fragmented cloud-native tools across observability, cost monitoring, security, and CI/CD. During incidents, engineers lose critical time switching contexts, correlating logs, metrics, and traces, and escalating issues to a small number of senior operators.
-- Agentkube consolidates debugging, cost visibility, and security insights into a single desktop IDE, with deep integrations across Kubernetes APIs, observability platforms such as New Relic, Datadog, and the LGTM stack, and cloud infrastructure. Using agent-driven root-cause analysis and Model Context Protocols (MCP), Agentkube surfaces actionable insights directly from cluster telemetry, enabling faster incident resolution, improved cost efficiency, and earlier detection of security risks.
+## What it does
 
-### Elest.io (DevOps Engineer - July 2024 - Oct 2024)
-Managed service catalog integration and worked as a release engineer for a fully managed DevOps platform.
-- Integrated and maintained 15+ open-source applications into Elest.io’s managed service catalog, ensuring production-grade deployments and long-term maintainability.
-- Worked as a release engineer, validating builds and managing version upgrades, reducing failed releases by 35%.
-- Built, maintained, and monitored CI/CD pipelines for 20+ projects, improving deployment consistency and reducing manual deployment effort by 40%.
-- Resolved customer-reported deployment & runtime issues, reducing mean time to resolution (MTTR) by 30%.
-- Configured and optimized Nginx reverse proxy setups to ensure correct routing and exposure of applications, improving external access reliability.
-- Implemented and managed wildcard SSL/TLS certificates across multiple applications, eliminating certificate-related outages and reducing support tickets by 25%.
-- Contributed fixes and configuration improvements to open-source software, improving deployment stability and reducing recurring incidents.
-- Worked extensively on Hetzner Cloud, ensuring stable provisioning, networking, and application reliability across dozens of customer environments.
+- **Vulnerability Scanning** — Grype (Anchore). Detects CVEs across OS packages and language ecosystems with severity classification (Critical, High, Medium, Low).
+- **CIS Docker Benchmark** — Dockle. Checks images against CIS Docker Benchmark best practices.
+- **Layer Efficiency Analysis** — Dive. Breaks down each image layer, identifies wasted space and inefficient build patterns.
+- **Image Inspection** — Skopeo-like metadata inspection via containers/image. No Docker daemon required.
+- **AI-Powered Reports** — Supervisor + Critique multi-agent pipeline generates actionable security reports with Dockerfile optimization suggestions.
+- **MCP Server** — stdio and HTTP modes. Compatible with Claude Code, Cursor, Claude Desktop, Archestra Chat.
 
-### Cyclops (CNCF Project) (Open Source Contributor - May 2024 - Aug 2024)
-Top contributor to Cyclops, an open-source Kubernetes operator and UI that simplifies application deployment.
-- Top contributor to Cyclops, an open-source Kubernetes operator and UI that simplifies application deployment by replacing complex YAML workflows with validated, UI-driven configurations; later accepted as a CNCF project.
-- Implemented authentication and authorization by building the Cyclops login flow and integrating Cerbos for fine-grained RBAC and policy enforcement.
-- Contributed significantly to the cyctl CLI, improving developer workflows and usability for managing Cyclops resources.
-- Extended the Cyclops controller to support additional Kubernetes resources and fixed reconciliation bugs, improving operator stability and deployment reliability.
-- Authored multiple approved and merged pull requests, collaborating closely with maintainers and being recognized as a top project contributor.
+## Architecture
 
-### Ai Planet (MLOps / DevOps Engineer - Mar 2024 - July 2024)
-Focused on ML infrastructure, scaling strategies, and cost optimization for AI workloads.
-- Incorporated the Keda-http Addon for dynamic scaling based on HTTP traffic as a component of deployment worker.
-- Implemented a Kubernetes Job to adjust the ScaledObject and HTTPScaledObject for scaling down to zero during periods of low traffic.
-- Implemented Kubernetes Job to add triggers to Keda ScaledObject to scale based on Memory, Traffic, CPU Utilization and conducted load testing with K6 by incrementally scaling virtual users to assess system resilience through HTTP requests.
-- Worked on Cloud Migration using AWS Application Migration Service, AWS Data Migration Service
-- Implemented MinIO Object Storage setup for Kubernetes on an EKS Cluster, along with configuring several other Kubernetes operators such as New Relic, Kube-prometheus-operator, and Keda using charts.
-- Implemented budget notifications and optimized the utilization of infrastructure resources, leading to a 21% reduction in infrastructure expenses. This involved selecting appropriate instance types and volumes, resulting in monthly savings of approximately $400.
-- Collaborated with the team lead to ensure the smooth migration and testing of Kubernetes clusters, instances, and databases, minimizing downtime.
-- Developed pipelines using ArgoCD and workflows with GitHub Actions, resulting in a 30% reduction in deployment times and increase in workflow efficiency.
-- Enabled autoscaling with Prometheus monitoring and Keda for incoming load in task queue, validated it through stress testing using Fortio.
-- Created Grafana dashboard to visualize cluster logging aggregated by Loki and Prometheus Metrics for the Tech team.
-- Developed Helm charts for application deployment processes, significantly reducing deployment time.
-- Implemented various deployment specifications to ensure high availability and resilience of the application, reducing downtime to 1.5 seconds. Incorporated distroless multi-stage builds to enhance application security and minimize the blast radius.
+Five components: UI (React dashboard) → API Server (Go/Fiber) → Worker (async scan jobs via Redis/Asynq) → Flow (Python AI report generation via LangGraph) → MCP Server (agent-native access).
 
-### DivineChants (Software Developer - Dec 2023 - Mar 2024)
-Developed a serverless music streaming platform with multi-cloud architecture.
-- Designed a serverless music platform, ensuring optimal performance, scalability, and monitoring using CloudWatch.
-- Developed multi-cloud solution utilizing MongoDB and S3/Cloud Storage to efficiently manage and retrieve user data and music files.
-- Designed and Developed responsive web-based components using React.
-- Ensured secure and compliant operations of the AWS/GCP infrastructure resources by managing Control Tower, IAM Identity Managers, and IAM Roles
-- Created docker-compose configuration file to orchestrate multi-container environments, enabling efficient local debugging and testing of applications.
-- Led the development of over 100+ RESTful endpoints for the music platform, strictly adhering to the MVC API architectural pattern to improve application scalability and maintainability.
-- Implemented scripts to automate the scraping of music files and artists metadata, resulting in a seamless process that pushed acquired data into the database efficiently.
-- Automated the deployment of Jenkins server on AWS EC2 instances by creating a script, reducing manual work.
-- Deployed MVP server on AWS EC2, utilizing Nginx as a reverse proxy to handle client requests, resulting in a 30% improvement in performance.
-- Deployed MongoDB Atlas with VPC peering into a new VPC using CloudFormation template and Resolved VPC configuration issues by integrating an Internet Gateway and VPC endpoint for connectivity to AWS services.
-- Implemented Prometheus metrics to monitor CPU, memory, disk, network usage, uptime, and process metrics for EC2 instances.
-- Built Grafana dashboard to visualize metrics for instances potentially reducing costs by 90% over CloudWatch through efficient resource allocation based on real-time visualizations of system performance.
+Artifacts stored in MinIO: grype.json, dockle.json, dive.json, report.md per job.
 
-### The Linux Foundation (LFX Mentee, Researcher - July 2023 - Dec 2023)
-Researched and developed consensus protocols for HyperLedger Fabric.
-- Architect scalable Go-based consensus protocol for HyperLedger Fabric, improving performance and reliability.
-- Benchmarked various consensus protocols such as Raft, PBFT, mirBFT, BFT-Smart, and zyzzyva
-- Developed automated testing environment for the consensus algorithm over AWS EC2 instances using Terraform.
-- Conducting thorough testing and assessment of different protocols to extract key system requisites, enabling the creation of a new consensus protocol that increased throughput by 30% while ensuring data integrity.
+## Integrations
 
-### Abblor Tech Pvt. Ltd. (Full Stack Developer - Apr 2023 - July 2023)
-Designed scalable systems and microservices for Login-as-a-Service application.
-- Responsible to design a highly scalable system and database framework for the Login-as-a-Service application, including the creation of a sequence diagram to visualize the system’s interactions.
-- Led the implementation of application microservices in Go, resulting in a 30% improvement in performance and ensuring seamless compatibility across platforms. Utilized gRPC for efficient internal network communication between services and developed a prototype using Node.js and Firestore to validate system scalability.
-- Implemented an optimized session snapshot management solution using in-memory caching, resulting in a 75% reduction in response time.
-- Implemented client-side caching across websites using React, resulting in a 50% reduction in loading time and significantly enhancing user experience by minimizing latency and network queries.
-- Deployed Pi-Hole on EC2 instance to intercept and block DNS-level ad-requests, enhancing browsing speed and reducing user data consumption.
-- Automated the deployment process of a Node.js application server on Google Cloud Platform (GCP) by developing Bash scripts, streamlining the deployment process and minimizing developer effort.
-- Designed API using Swagger to document the entire workflow of the application, ensuring clear understanding of installation, deployment, and scripting procedures
+- Container Registries: Kubernetes (in-cluster), Docker Hub, Harbor, GHCR
+- LLM Providers: OpenAI, Anthropic, Google Gemini, OpenRouter
+- LLM Proxy & Observability: Archestra AI (Tool Policies, cost monitoring, traces)
 
-## Technical Expertise
+## Tech Stack
 
-**Languages:** Go, Python, JavaScript/TypeScript, Bash
-**Cloud Platforms:** AWS, GCP, Azure, Hetzner
-**Kubernetes & Container Tech:** Docker, Kubernetes, Helm, Keda, Istio, Knative
-**CI/CD & GitOps:** ArgoCD, GitHub Actions, Jenkins
-**Monitoring & Observability:** Prometheus, Grafana, Loki, AlertManager, New Relic, Signoz, OpenTelemetry
-**Databases:** MongoDB, PostgreSQL, Redis, VectorDBs, Supabase
-**Infrastructure as Code:** Terraform, CloudFormation
-**Frontend:** React, Next.js, State Management
-**Backend:** Node.js, FastAPI, RESTful APIs, gRPC, Microservices
-**AI/ML:** LangChain, LlamaIndex, OpenAI, Anthropic, HuggingFace, Agents, MCP, RAG 
-## Philosophy
-I build things that make builders unstoppable — chasing hard problems and making them feel simple.
+- Backend: Go 1.22+, Fiber v2, PostgreSQL + GORM, Redis + Asynq, MinIO, OpenTelemetry
+- AI: Python, LangGraph, multi-agent (Supervisor + Critique)
+- Frontend: React + TypeScript + Vite + shadcn/ui + Tailwind CSS
+- Security: AES-256-GCM encrypted credential storage
 
-## Contact
-- Email: meetsiddhantprateek@gmail.com
-- LinkedIn: https://linkedin.com/in/siddhantprateek
-- GitHub: https://github.com/siddhantprateek
-- Medium: https://medium.com/@siddhantprateek
-- X/Twitter: https://x.com/siddhantprateek
-- Resume: https://drive.google.com/file/d/1J3Uupypvw660tY208q4JAQVJbFLxPY5u/view?usp=sharing
+## Author
 
-## Current Location
-Remote (Based in Ireland/India)
-
-## Research Publications
-
-### "Enhancing e-voting security with quantum-resistant encryption: a blockchain-based approach utilizing elliptic curve Diffie–Hellman and decentralized storage" (2023)
-**Authors:** S.P. Mahanayak 
-**Published:** SN Computer Science 4(5), 642  
-**Citations:** 7  
-**Key Contributions:**
-- Developed an end-to-end secure, anonymous, anti-quantum, tamper-resistant e-voting system using blockchain-based decentralized architecture
-- Implemented Elliptical Curve-Diffie–Hellman key agreement protocol for vote encryption
-- Deployed smart contracts on Polygon network using modified proof-of-stake consensus for faster transaction processing and lower fees
-- Addressed quantum cryptography vulnerabilities in existing e-voting systems
-
-### "Leveraging the synergy of edge computing and IOT in Supply Chain Management" (2023)
-**Authors:** V. Sharma, S.P. Mahanayak
-**Published:** 2023 10th IEEE Uttar Pradesh Section International Conference on Electrical, Electronics and Computer Engineering (UPCON)  
-**Citations:** 4  
-**Key Contributions:**
-- Explored the convergence of IoT devices and edge computing for supply chain optimization
-- Analyzed how IoT and neural networks enable seamless coordination in complex supply chains
-- Addressed challenges of unifying data from diverse sources and managing system dependencies
-- Provided comprehensive survey of AI and Edge Computing integration architectures
-
-### "Towards Blockchain Driven Solution for Remote Healthcare Service: An Analytical Study" (2024)
-**Authors:** S.P. Mahanayak
-**Published:** Blockchain Transformations: Navigating the Decentralized Protocols Era, 59-79 (Springer)  
-**Citations:** 3  
-**Key Contributions:**
-- Provided analytical examination of blockchain implementation in remote healthcare delivery systems
-- Explored decentralized and reliable medical service delivery through blockchain technology
-- Contributed to the growing literature on blockchain applications in healthcare
-- Focused on enhancing telehealthcare functionalities through decentralized approaches
-
-### "Conceptual Assessment of Sensory Networks and Its Functional Aspects" (2025)
-**Authors:** S.P. Mahanayak 
-**Published:** Sustainable Resource Management in Next‐Generation Computational Constrained Networks (Wiley)  
-**Key Contributions:**
-- Developed conceptual framework for sensory networks in IoT environments
-- Analyzed functional aspects of interconnected objects in next-generation computational networks
-- Focused on sustainable resource management in computationally constrained systems
-- Contributed to IoT network optimization and management strategies
-
-## Research Interests
-- Blockchain Technology & Cryptography
-- Quantum-Resistant Security Systems
-- IoT and Edge Computing Integration
-- Healthcare Technology Solutions
-- Supply Chain Optimization
-- Sensor Networks and Distributed Systems
-
-## Availability
-Open to new opportunities in Platform Engineering, DevOps, and Founding Engineer roles.
+Siddhant Prateek Mahanayak — Platform Engineer & Founder
+GitHub: https://github.com/siddhantprateek
+LinkedIn: https://linkedin.com/in/siddhantprateek
