@@ -212,7 +212,11 @@ func ProcessAnalyzeJob(ctx context.Context, payload []byte) error {
 	if flowURL == "" {
 		flowURL = "http://localhost:8000"
 	}
-	if err := triggerFlowReport(ctx, flowURL, data.JobID, "openai"); err != nil {
+	flowProvider := os.Getenv("FLOW_PROVIDER")
+	if flowProvider == "" {
+		flowProvider = "openai"
+	}
+	if err := triggerFlowReport(ctx, flowURL, data.JobID, flowProvider); err != nil {
 		log.Printf("[Worker] Flow report generation failed for job %s: %v", data.JobID, err)
 		// Non-fatal — scans are still stored
 	}

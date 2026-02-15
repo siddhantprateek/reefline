@@ -31,7 +31,7 @@ def _decrypt_credentials(encrypted: str) -> dict:
     return json.loads(plaintext)
 
 
-def get_ai_credentials(provider: str, user_id: str = "default-user") -> dict | None:
+def get_ai_credentials(provider: str, user_id: str = "admin") -> dict | None:
     """
     Returns integration_id, api_key, model_id for the given provider + user.
     Decrypts the credentials blob stored by the Go server.

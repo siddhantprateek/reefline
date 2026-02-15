@@ -144,6 +144,18 @@ func main() {
 		log.Println("Using In-Memory job queue")
 	}
 
+	// Log flow service configuration
+	flowURL := os.Getenv("FLOW_SERVICE_URL")
+	if flowURL == "" {
+		flowURL = "http://localhost:8000"
+	}
+	flowProvider := os.Getenv("FLOW_PROVIDER")
+	if flowProvider == "" {
+		flowProvider = "openai"
+	}
+	log.Printf("Flow service URL: %s", flowURL)
+	log.Printf("Flow provider:    %s", flowProvider)
+
 	// Register Handler
 	q.RegisterHandler("analyze_image", worker.ProcessAnalyzeJob)
 

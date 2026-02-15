@@ -19,6 +19,7 @@ export function ReportPage() {
   const [dockle, setDockle] = useState<DockleReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rightTab, setRightTab] = useState<"reports" | "vulnerabilities" | "artifacts">("reports");
 
   useEffect(() => {
     if (!jobId) return;
@@ -117,8 +118,16 @@ export function ReportPage() {
     <div className="flex flex-col overflow-hidden">
       <ReportHeader jobId={jobId} status={report.status} imageRef={report.input_scenario} scanTime={dockle?.scanTime} />
       <ReportLayout
-        left={<InspectorPanel report={report} grype={grype} dive={dive} dockle={dockle} />}
-        right={<TabsPanel report={report} jobId={jobId} />}
+        left={
+          <InspectorPanel
+            report={report}
+            grype={grype}
+            dive={dive}
+            dockle={dockle}
+            onShowAllVulnerabilities={() => setRightTab("vulnerabilities")}
+          />
+        }
+        right={<TabsPanel report={report} jobId={jobId} grype={grype} defaultTab={rightTab} />}
       />
     </div>
   );

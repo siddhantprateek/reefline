@@ -99,7 +99,7 @@ func (h *AnalyzeHandler) Handle(c *fiber.Ctx) error {
 	job := models.Job{
 		ID:         jobID,
 		JobID:      jobID,
-		UserID:     "default-user", // TODO: Auth
+		UserID:     "admin", // TODO: Auth
 		ImageRef:   req.ImageRef,
 		Dockerfile: req.Dockerfile,
 		Status:     models.JobStatusQueued,

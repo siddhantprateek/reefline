@@ -55,7 +55,7 @@ func (h *JobsHandler) List(c *fiber.Ctx) error {
 	ctx := c.Context()
 
 	// TODO: Get authenticated user from context
-	userID := "default-user"
+	userID := "admin"
 
 	// Parse pagination params
 	page, _ := strconv.Atoi(c.Query("page", "1"))
@@ -144,7 +144,7 @@ func (h *JobsHandler) Get(c *fiber.Ctx) error {
 	}
 
 	// TODO: Get authenticated user from context
-	userID := "default-user"
+	userID := "admin"
 
 	// Fetch job from database
 	var job models.Job
@@ -177,7 +177,7 @@ func (h *JobsHandler) Delete(c *fiber.Ctx) error {
 	}
 
 	// TODO: Get authenticated user from context
-	userID := "default-user"
+	userID := "admin"
 
 	// Fetch job from database to verify ownership
 	var job models.Job

@@ -1,13 +1,15 @@
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { FileText, Package, X } from "lucide-react";
+import { FileText, Package, Shield, X } from "lucide-react";
 import { ReportsTab } from "./reports-tab";
 import { ArtifactsTab } from "./artifacts-tab";
+import { VulnerabilityTab } from "./vulnerability-tab";
 import type { JobReport } from "@/api/jobs.api";
+import type { GrypeReport } from "@/types/jobs";
 
 const TABS = [
   { id: "reports", label: "Report.md", icon: FileText },
+  { id: "vulnerabilities", label: "Vulnerabilities", icon: Shield },
   { id: "artifacts", label: "Artifacts", icon: Package },
 ] as const;
 
@@ -16,10 +18,16 @@ type TabId = typeof TABS[number]["id"];
 interface TabsPanelProps {
   report: JobReport;
   jobId: string;
+  grype?: GrypeReport | null;
+  defaultTab?: TabId;
 }
 
-export function TabsPanel({ report, jobId }: TabsPanelProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("reports");
+export function TabsPanel({ report, jobId, grype, defaultTab }: TabsPanelProps) {
+  const [activeTab, setActiveTab] = useState<TabId>(defaultTab ?? "reports");
+
+  useEffect(() => {
+    if (defaultTab) setActiveTab(defaultTab);
+  }, [defaultTab]);
 
   return (
     <div className="h-full flex flex-col">
@@ -66,6 +74,15 @@ export function TabsPanel({ report, jobId }: TabsPanelProps) {
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto bg-background">
         {activeTab === "reports" && <ReportsTab report={report} jobId={jobId} />}
+        {activeTab === "vulnerabilities" && grype
+          ? <VulnerabilityTab grype={grype} />
+          : activeTab === "vulnerabilities" && (
+            <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
+              <Shield className="h-8 w-8 mb-2" />
+              <p className="text-sm">No vulnerability data available</p>
+            </div>
+          )
+        }
         {activeTab === "artifacts" && <ArtifactsTab jobId={jobId} />}
       </div>
     </div>

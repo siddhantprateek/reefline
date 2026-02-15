@@ -651,7 +651,7 @@ func getUserID(c *fiber.Ctx) string {
 	// TODO: Extract from JWT/session once auth middleware is in place
 	userID := c.Get("X-User-ID")
 	if userID == "" {
-		userID = "default-user"
+		userID = "admin"
 	}
 	return userID
 }

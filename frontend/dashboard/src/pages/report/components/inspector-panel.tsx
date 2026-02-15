@@ -12,14 +12,15 @@ interface InspectorPanelProps {
   grype: GrypeReport | null;
   dive: DiveReport | null;
   dockle: DockleReport | null;
+  onShowAllVulnerabilities?: () => void;
 }
 
 const SEVERITY_CONFIG = {
-  Critical: { color: "bg-red-600", textColor: "text-red-600 dark:text-red-400" },
-  High: { color: "bg-orange-500", textColor: "text-orange-500 dark:text-orange-400" },
-  Medium: { color: "bg-yellow-500", textColor: "text-yellow-500 dark:text-yellow-400" },
-  Low: { color: "bg-blue-500", textColor: "text-blue-400" },
-  Unknown: { color: "bg-muted-foreground", textColor: "text-muted-foreground" },
+  Critical: { color: "bg-red-600", textColor: "text-red-600 dark:text-red-400", badge: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+  High: { color: "bg-orange-500", textColor: "text-orange-500 dark:text-orange-400", badge: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" },
+  Medium: { color: "bg-yellow-500", textColor: "text-yellow-500 dark:text-yellow-400", badge: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
+  Low: { color: "bg-blue-500", textColor: "text-blue-400", badge: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  Unknown: { color: "bg-muted-foreground", textColor: "text-muted-foreground", badge: "bg-secondary text-muted-foreground" },
 } as const;
 
 function getGrypeSeverityCounts(grype: GrypeReport) {
@@ -40,7 +41,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
 }
 
-export function InspectorPanel({ report, grype, dive, dockle }: InspectorPanelProps) {
+export function InspectorPanel({ report, grype, dive, dockle, onShowAllVulnerabilities }: InspectorPanelProps) {
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const measured = report.report?.measured;
   const severityCounts = grype ? getGrypeSeverityCounts(grype) : null;
@@ -85,23 +86,33 @@ export function InspectorPanel({ report, grype, dive, dockle }: InspectorPanelPr
       {/* Vulnerability Summary from Grype */}
       {severityCounts && totalCves > 0 && (
         <div>
-          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Vulnerability Summary
-            <Badge variant="outline" className="ml-1">{totalCves} total</Badge>
-          </h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Vulnerability Summary
+              <Badge variant="outline" className="ml-1">{totalCves} total</Badge>
+            </h3>
+            {onShowAllVulnerabilities && (
+              <Button variant="outline" size="sm" onClick={onShowAllVulnerabilities}>
+                Show all
+              </Button>
+            )}
+          </div>
           <div className="grid grid-cols-5 gap-2">
             {(Object.keys(SEVERITY_CONFIG) as Array<keyof typeof SEVERITY_CONFIG>).map((sev) => (
-              <div
-                key={sev}
-                className="flex flex-col items-center p-3 border bg-muted/20"
-              >
-                <span className={`text-2xl font-bold ${SEVERITY_CONFIG[sev].textColor}`}>
-                  {severityCounts[sev] ?? 0}
-                </span>
-                <span className="text-xs text-muted-foreground mt-1">{sev}</span>
-                <div className={`h-1 w-full rounded-full mt-2 ${SEVERITY_CONFIG[sev].color} opacity-60`} />
-              </div>
+              <Card key={sev} className="shadow-none border border-border">
+                <CardContent className="py-0 px-3 flex flex-col h-full min-h-24">
+                  <span className="text-xs uppercase font-medium text-muted-foreground mb-auto">{sev}</span>
+                  <div className="mt-auto">
+                    <p className={`text-3xl font-light mb-1 ${SEVERITY_CONFIG[sev].textColor}`}>
+                      {severityCounts[sev] ?? 0}
+                    </p>
+                    <div className="w-full h-1 bg-secondary rounded-full">
+                      <div className={`h-1 rounded-full ${SEVERITY_CONFIG[sev].color}`} style={{ width: "100%" }} />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
 
@@ -119,8 +130,7 @@ export function InspectorPanel({ report, grype, dive, dockle }: InspectorPanelPr
                       <span className="text-muted-foreground shrink-0">{row[4]}</span>
                     </div>
                     <Badge
-                      variant="outline"
-                      className={`shrink-0 ml-2 ${SEVERITY_CONFIG[row[5] as keyof typeof SEVERITY_CONFIG]?.textColor ?? ""}`}
+                      className={`shrink-0 ml-2 border-0 ${SEVERITY_CONFIG[row[5] as keyof typeof SEVERITY_CONFIG]?.badge ?? "bg-secondary text-muted-foreground"}`}
                     >
                       {row[5]}
                     </Badge>
