@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Menu, X, CalendarDays, Linkedin, Twitter } from "lucide-react";
+import { ArrowUpRight, Menu, X, CalendarDays, Linkedin, Twitter, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { siGithub, siGmail, siGooglescholar } from "simple-icons";
@@ -47,6 +47,23 @@ export function Header() {
             >
               llms.txt <ArrowUpRight size={18} />
             </Link>
+            <motion.a
+              href="https://www.youtube.com/watch?v=rQRcPPCOZ_w"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center w-fit py-1 cursor-pointer px-1 bg-foreground text-background text-sm hover:opacity-90 transition-opacity"
+              whileHover={{ scale: 1.05, y: -1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <motion.div
+                className='bg-muted/20 p-1.5'
+                whileHover={{ rotate: 180 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Play size={16} fill="currentColor" />
+              </motion.div>
+              <span className='px-2'>Watch Demo</span>
+            </motion.a>
             <motion.a
               href="https://github.com/siddhantprateek/reefline"
               target="_blank"
@@ -121,6 +138,25 @@ export function Header() {
                   >
                     llms.txt <ArrowUpRight size={18} />
                   </Link>
+
+                  {/* Watch Demo */}
+                  <motion.a
+                    href="https://www.youtube.com/watch?v=rQRcPPCOZ_w"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center w-full py-2 cursor-pointer px-2 bg-foreground text-background text-sm hover:opacity-90 transition-opacity"
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <motion.div
+                      className='bg-muted/20 p-1.5'
+                      whileHover={{ rotate: 180 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Play size={16} fill="currentColor" />
+                    </motion.div>
+                    <span className='px-2'>Watch Demo</span>
+                  </motion.a>
 
                   {/* GitHub */}
                   <motion.a
