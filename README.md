@@ -8,6 +8,10 @@ As more AI-generated code hits open source, managing application security is lik
 
 ## Demo
 
+
+https://github.com/user-attachments/assets/05f77d9d-70aa-4f6e-a38e-c243d0f5c2bf
+
+
 <video src="https://github.com/user-attachments/assets/reef.mp4" controls autoplay loop muted width="100%"></video>
 
 > For a higher quality version, watch on [YouTube](https://www.youtube.com/watch?v=rQRcPPCOZ_w).
